@@ -1,0 +1,5 @@
+SilverStripe\GraphQL\Controller:
+  schema:
+    mutations:
+      createToken: 'Firesphere\GraphQLJWT\CreateTokenMutationCreator'
+      refreshToken: 'Firesphere\GraphQLJWT\RefreshTokenMutationCreator'
