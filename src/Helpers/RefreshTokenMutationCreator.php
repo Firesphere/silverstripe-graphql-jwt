@@ -27,9 +27,7 @@ class RefreshTokenMutationCreator extends MutationCreator implements OperationRe
 
     public function type()
     {
-        return function () {
-            return Type::string();
-        };
+        return Type::string();//$this->manager->getType('member');
     }
 
     public function args()
