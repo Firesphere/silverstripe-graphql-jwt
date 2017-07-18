@@ -10,6 +10,7 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\MutationCreator;
 use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\Security\Authenticator;
+use SilverStripe\Security\IdentityStore;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
 
@@ -18,48 +19,55 @@ class CreateTokenMutationCreator extends MutationCreator implements OperationRes
     public function attributes()
     {
         return [
-            'name' => 'createToken',
+            'name'        => 'createToken',
             'description' => 'Creates a JWT token for a valid user'
         ];
     }
 
     public function type()
     {
-        return Type::string();//$this->manager->getType('member');
+        return $this->manager->getType('MemberToken');
     }
 
     public function args()
     {
         return [
-            'Email' => ['type' => Type::nonNull(Type::string())],
+            'Email'    => ['type' => Type::nonNull(Type::string())],
             'Password' => ['type' => Type::nonNull(Type::string())]
         ];
     }
 
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
-        $authenticators = Security::singleton()->getApplicableAuthenticators(Authenticator::LOGIN);
+        $security = Injector::inst()->get(Security::class);
+        $authenticators = $security->getApplicableAuthenticators(Authenticator::LOGIN);
         $request = Controller::curr()->getRequest();
         $member = null;
 
-        if(count($authenticators)) {
-            foreach($authenticators as $authenticator) {
+        if (count($authenticators)) {
+            foreach ($authenticators as $authenticator) {
                 $member = $authenticator->authenticate($args, $request, $result);
-                if($result->isValid()) {
+                if ($result->isValid()) {
                     break;
                 }
             }
         }
         $authenticator = Injector::inst()->get(JWTAuthenticator::class);
 
-        if($member instanceof Member) {
-            $token = $authenticator->generateToken($member);
-        } else {
+        if ($member instanceof Member) {
+            $member->Token = $authenticator->generateToken($member);
+        } elseif (JWTAuthenticator::config()->get('anonymous_allowed')) {
+            $member = Member::create(['ID' => 0, 'FirstName' => 'Anonymous']);
             // Create an anonymous token
-            $token = $authenticator->generateToken(Member::create(['ID' => 0, 'FirstName' => 'Anonymous']));
+            $member->Token = $authenticator->generateToken($member);
+        } else {
+            Security::setCurrentUser(null);
+            Injector::inst()->get(IdentityStore::class)->logOut();
+
+            return Member::create();
         }
 
-        return $token;
+        return $member;
     }
 
 }

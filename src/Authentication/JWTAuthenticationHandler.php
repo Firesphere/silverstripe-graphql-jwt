@@ -3,7 +3,9 @@
 namespace Firesphere\GraphQLJWT;
 
 use SilverStripe\Control\HTTPRequest;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Security\AuthenticationHandler;
+use SilverStripe\Security\IdentityStore;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
 
@@ -37,17 +39,6 @@ class JWTAuthenticationHandler implements AuthenticationHandler
         $this->authenticator = $authenticator;
     }
 
-    public function preRequest($request)
-    {
-        return $this->authenticateRequest($request);
-    }
-
-    public function postRequest()
-    {
-        return;
-    }
-
-
     public function authenticateRequest(HTTPRequest $request)
     {
         $authHeader = $request->getHeader('Authorization');
@@ -72,11 +63,8 @@ class JWTAuthenticationHandler implements AuthenticationHandler
 
     public function logOut(HTTPRequest $request = null)
     {
+        // A token can actually not be invalidated, only blacklisted
         if ($request !== null) {
-            $authHeader = $request->getHeader('Authorization');
-            if ($authHeader && preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
-                $member = $this->authenticator->authenticate(['token' => $matches[1]], $request);
-            }
             $request->getSession()->clear('jwt');
         }
         Security::setCurrentUser(null);

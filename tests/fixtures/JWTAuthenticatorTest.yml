@@ -1,0 +1,5 @@
+SilverStripe\Security\Member:
+  admin:
+    FirstName: Admin
+    Email: admin@silverstripe.com
+    Password: error
