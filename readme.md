@@ -48,6 +48,8 @@ Authorization: Bearer 123456789ctmbxkjup.euidhtcgcfdiupyefuqdjihkdthdn
 
 Currently, the default method for encrypting the JWT is with Sha256.
 
+JWT is signed with multiple factors, including the host, audience (app/remote user), a secret key and a timeframe within which the token is valid.
+
 ## Supported services
 
 By default, JWT only supports login. As it's tokens can not be disabled, nor used for password changes or resets.

@@ -5,3 +5,5 @@ SilverStripe\GraphQL\Controller:
     mutations:
       createToken: 'Firesphere\GraphQLJWT\CreateTokenMutationCreator'
       refreshToken: 'Firesphere\GraphQLJWT\RefreshTokenMutationCreator'
+    queries:
+      validateToken: 'Firesphere\GraphQLJWT\ValidateTokenQueryCreator'
