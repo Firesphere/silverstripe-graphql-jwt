@@ -1,15 +1,10 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: simon
- * Date: 18-Jul-17
- * Time: 20:59
- */
 
 namespace Firesphere\GraphQLJWT\tests;
 
 
 use Firesphere\GraphQLJWT\CreateTokenMutationCreator;
+use Firesphere\GraphQLJWT\JWTAuthenticationHandler;
 use Firesphere\GraphQLJWT\JWTAuthenticator;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Control\Director;
@@ -19,8 +14,9 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Security\Member;
 
-class JWTAuthenticatorTest extends SapphireTest
+class JWTAuthenticationHandlerTest extends SapphireTest
 {
+
     protected static $fixture_file = '../fixtures/JWTAuthenticatorTest.yml';
 
     protected $member;
@@ -44,28 +40,30 @@ class JWTAuthenticatorTest extends SapphireTest
         parent::tearDown();
     }
 
-    public function testValidToken()
+    public function testAuthenticateRequest()
     {
-        $authenticator = Injector::inst()->get(JWTAuthenticator::class);
         $request = new HTTPRequest('POST', Director::absoluteBaseURL() . '/graphql');
         $request->addHeader('Authorization', 'Bearer ' . $this->token);
 
-        $result = $authenticator->authenticate(['token' => $this->token], $request);
+        $handler = Injector::inst()->get(JWTAuthenticationHandler::class);
+
+        $result = $handler->authenticateRequest($request);
 
         $this->assertTrue($result instanceof Member);
-        $this->assertEquals($this->member->ID, $result->ID);
     }
 
-    public function testInvalidToken()
+    public function testInvalidAuthenticateRequest()
     {
         Config::modify()->set(JWTAuthenticator::class, 'signer_key', 'string');
-        $authenticator = Injector::inst()->get(JWTAuthenticator::class);
+
         $request = new HTTPRequest('POST', Director::absoluteBaseURL() . '/graphql');
         $request->addHeader('Authorization', 'Bearer ' . $this->token);
 
-        $result = $authenticator->authenticate(['token' => $this->token], $request);
+        $handler = Injector::inst()->get(JWTAuthenticationHandler::class);
 
-        $this->assertFalse($result instanceof Member);
+        $result = $handler->authenticateRequest($request);
+
+        $this->assertTrue($result instanceof Member);
+
     }
-
 }

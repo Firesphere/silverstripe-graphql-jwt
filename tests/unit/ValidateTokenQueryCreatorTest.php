@@ -1,25 +1,22 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: simon
- * Date: 18-Jul-17
- * Time: 20:59
- */
 
 namespace Firesphere\GraphQLJWT\tests;
 
 
 use Firesphere\GraphQLJWT\CreateTokenMutationCreator;
 use Firesphere\GraphQLJWT\JWTAuthenticator;
+use Firesphere\GraphQLJWT\ValidateTokenQueryCreator;
 use GraphQL\Type\Definition\ResolveInfo;
+use SilverStripe\Control\Controller;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
+use SilverStripe\Control\Session;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Security\Member;
 
-class JWTAuthenticatorTest extends SapphireTest
+class ValidateTokenQueryCreatorTest extends SapphireTest
 {
     protected static $fixture_file = '../fixtures/JWTAuthenticatorTest.yml';
 
@@ -44,28 +41,32 @@ class JWTAuthenticatorTest extends SapphireTest
         parent::tearDown();
     }
 
-    public function testValidToken()
+    public function testValidateToken()
     {
-        $authenticator = Injector::inst()->get(JWTAuthenticator::class);
         $request = new HTTPRequest('POST', Director::absoluteBaseURL() . '/graphql');
         $request->addHeader('Authorization', 'Bearer ' . $this->token);
 
-        $result = $authenticator->authenticate(['token' => $this->token], $request);
+        $request->setSession(new Session(['hello' => 'bye'])); // We need a session
+        Controller::curr()->setRequest($request);
+        $queryCreator = Injector::inst()->get(ValidateTokenQueryCreator::class);
+        $response = $queryCreator->resolve(null, [], [], new ResolveInfo([]));
 
-        $this->assertTrue($result instanceof Member);
-        $this->assertEquals($this->member->ID, $result->ID);
+        $this->assertTrue($response);
     }
 
-    public function testInvalidToken()
+    public function testValidateInvalidToken()
     {
         Config::modify()->set(JWTAuthenticator::class, 'signer_key', 'string');
-        $authenticator = Injector::inst()->get(JWTAuthenticator::class);
+
         $request = new HTTPRequest('POST', Director::absoluteBaseURL() . '/graphql');
         $request->addHeader('Authorization', 'Bearer ' . $this->token);
+        $request->setSession(new Session(['hello' => 'bye'])); // We need a session
 
-        $result = $authenticator->authenticate(['token' => $this->token], $request);
+        Controller::curr()->setRequest($request);
 
-        $this->assertFalse($result instanceof Member);
+        $queryCreator = Injector::inst()->get(ValidateTokenQueryCreator::class);
+        $response = $queryCreator->resolve(null, [], [], new ResolveInfo([]));
+
+        $this->assertFalse($response);
     }
-
 }

@@ -1,6 +1,6 @@
 <?php
-namespace Firesphere\GraphQLJWT\Tests;
 
+namespace Firesphere\GraphQLJWT\Tests;
 
 use Firesphere\GraphQLJWT\CreateTokenMutationCreator;
 use Firesphere\GraphQLJWT\JWTAuthenticator;
