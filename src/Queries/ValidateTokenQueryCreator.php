@@ -22,9 +22,7 @@ class ValidateTokenQueryCreator extends QueryCreator implements OperationResolve
 
     public function args()
     {
-        return [
-            'Token' => ['type' => Type::string()]
-        ];
+        return [];
     }
 
     public function type()
@@ -35,13 +33,15 @@ class ValidateTokenQueryCreator extends QueryCreator implements OperationResolve
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
         $validator = Injector::inst()->get(JWTAuthenticator::class);
-        /** @var array $data Authenticator expects lower case 'token' */
-        $data = ['token' => $args['Token']];
 
         $request = Controller::curr()->getRequest();
-        $result = $validator->authenticate($data, $request);
+        $authHeader = $request->getHeader('Authorization');
+        $member = null;
+        if ($authHeader && preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
+            $member = $validator->authenticate(['token' => $matches[1]], $request);
+        }
 
-        return $result instanceof Member;
+        return $member instanceof Member;
 
     }
 }
