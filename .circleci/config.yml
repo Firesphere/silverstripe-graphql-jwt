@@ -52,6 +52,7 @@ jobs:
       - run: composer require scriptfusion/phpunit-immediate-exception-printer:^1
       - run: rm phpunit.xml.dist
       - run: cp graphql-jwt/phpunit.xml.dist .
+      - run: framework/sake dev/build
 
       - save_cache:
           paths:
