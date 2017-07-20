@@ -24,10 +24,3 @@ coding_style:
     spaces:
       other:
         after_type_cast: false
-build:
-  nodes:
-    analysis:
-      project_setup:
-        override: ['true']
-      tests:
-        override: [php-scrutinizer-run]
