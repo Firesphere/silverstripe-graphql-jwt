@@ -1,0 +1,62 @@
+# PHP CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-php/ for more details
+#
+version: 2
+jobs:
+  build:
+    docker:
+      - image: brettt89/silverstripe-web
+        environment:
+          - SS_DATABASE_CLASS=MySQLPDODatabase
+          - SS_DATABASE_SERVER=127.0.0.1
+          - SS_DATABASE_USERNAME=root
+          - SS_DATABASE_PASSWORD=ubuntu
+          - SS_DATABASE_NAME=circle_test
+          - SS_ENVIRONMENT_TYPE=test
+      - image: circleci/mysql:5.7
+        environment:
+          - MYSQL_USER=root
+          - MYSQL_ROOT_PASSWORD=ubuntu
+          - MYSQL_DATABASE=circle_test
+          - MYSQL_HOST=127.0.0.1
+
+    working_directory: ~/var/www
+
+    branches:
+      only:
+        - master
+        - develop
+        - /feature.*/
+
+    steps:
+      - run: git clone -b 4 https://github.com/silverstripe/silverstripe-installer.git ~/var/www
+
+      # Install additional requirements
+      - run:
+          command: |
+            php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+            php -r "if (hash_file('SHA384', 'composer-setup.php') === '669656bab3166a7aff8a7506b8cb2d1c292f042046c5a994c43155c0be6190fa0355160742ab2e1c88d40d5be660b410') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+            php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+            php -r "unlink('composer-setup.php');"
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "composer.json" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+
+      - run: composer install -n --prefer-dist
+      - run: composer require firesphere/silverstripe-graphql-jwt:dev-master
+      - run: composer require scriptfusion/phpunit-immediate-exception-printer:^1
+      - run: rm phpunit.xml.dist
+      - run: cp graphql-jwt/phpunit.xml.dist .
+
+      - save_cache:
+          paths:
+            - ./vendor
+          key: v1-dependencies-{{ checksum "composer.json" }}
+
+      # run tests!
+      - run: vendor/bin/phpunit graphql-jwt/tests/unit -d memory_limit=512M
