@@ -28,6 +28,27 @@ mutation {
 }
 ```
 
+## Validate token
+
+If you have an app and want to validate your token, you can address the `validateToken` method. E.g.:
+```
+query {
+    validateToken
+}
+```
+
+It only needs to call the endpoint. The token should be in the header, via your middleware for the request, as a `Authorization: Bearer 1235'piue,,54fxdg5`
+
+If the token is valid, you'll get a response like this:
+```
+data: {
+  validateToken: true
+}
+```
+
+And obviously the response is false when the token is invalid.
+
+
 ## Enable CORS
 
 To use JWT, CORS needs to be enabled. This can be done by adding the following to your projects config:
