@@ -5,6 +5,7 @@ namespace Firesphere\GraphQLJWT;
 
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
+use SilverStripe\Control\Controller;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\QueryCreator;
@@ -37,7 +38,8 @@ class ValidateTokenQueryCreator extends QueryCreator implements OperationResolve
         /** @var array $data Authenticator expects lower case 'token' */
         $data = ['token' => $args['Token']];
 
-        $result = $validator->authenticate($data);
+        $request = Controller::curr()->getRequest();
+        $result = $validator->authenticate($data, $request);
 
         return $result instanceof Member;
 
