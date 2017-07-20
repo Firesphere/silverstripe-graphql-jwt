@@ -31,7 +31,7 @@ class RefreshTokenMutationCreator extends MutationCreator implements OperationRe
     }
 
     /**
-     * @todo Make it refresh things, it just returns an auth result now
+     * @todo Make it refresh things
      * @param mixed       $object
      * @param array       $args
      * @param mixed       $context

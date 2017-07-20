@@ -35,7 +35,8 @@ class JWTAuthenticator extends MemberAuthenticator
             $result = new ValidationResult();
         }
         $token = $data['token'];
-        $parsedToken = (new Parser())->parse((string)$token);
+        $parser = new Parser();
+        $parsedToken = $parser->parse((string)$token);
         $signer = new Sha256();
         $signerKey = static::config()->get('signer_key');
 
@@ -44,8 +45,10 @@ class JWTAuthenticator extends MemberAuthenticator
 
             return null;
         }
+        /** @var Member $member */
+        $member = Member::get()->byID($parsedToken->getClaim('uid'));
 
-        return Member::get()->byID($parsedToken->getClaim('uid'));
+        return $member;
     }
 
     public function generateToken(Member $member)

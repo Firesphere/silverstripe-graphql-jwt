@@ -20,7 +20,8 @@ class MemberTokenTypeCreator extends TypeCreator
             'ID' => ['type' => Type::int()],
             'FirstName' => ['type' => Type::string()],
             'Surname' => ['type' => Type::string()],
-            'Token' => ['type' => Type::nonNull(Type::string())]
+            'Email' => ['type' => Type::string()],
+            'Token' => ['type' => Type::string()]
         ];
     }
 }

@@ -12,7 +12,6 @@ use SilverStripe\Security\Security;
 /**
  * Class JWTAuthenticationHandler
  *
- * @todo refactor to the AppKernelStuff
  *
  * @package Firesphere\GraphQLJWT
  */
