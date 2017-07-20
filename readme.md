@@ -1,3 +1,9 @@
+# Status
+
+[![CircleCI](https://circleci.com/gh/Firesphere/silverstripe-graphql-jwt/tree/master.svg?style=svg)](https://circleci.com/gh/Firesphere/silverstripe-graphql-jwt/tree/master)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/Firesphere/silverstripe-graphql-jwt/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/Firesphere/silverstripe-graphql-jwt/?branch=master)
+
+
 # GraphQL JSON Web Token authenticator
 
 This module provides a JWT-interface for creating JSON Web Tokens for authentication.
