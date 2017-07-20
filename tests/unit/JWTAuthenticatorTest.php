@@ -1,13 +1,6 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: simon
- * Date: 18-Jul-17
- * Time: 20:59
- */
 
 namespace Firesphere\GraphQLJWT\tests;
-
 
 use Firesphere\GraphQLJWT\CreateTokenMutationCreator;
 use Firesphere\GraphQLJWT\JWTAuthenticator;
@@ -33,8 +26,10 @@ class JWTAuthenticatorTest extends SapphireTest
         $this->member = $this->objFromFixture(Member::class, 'admin');
         $createToken = Injector::inst()->get(CreateTokenMutationCreator::class);
 
-        $response = $createToken->resolve(null, ['Email' => 'admin@silverstripe.com', 'Password' => 'error'], [],
-            new ResolveInfo([]));
+        $response = $createToken->resolve(
+            null, ['Email' => 'admin@silverstripe.com', 'Password' => 'error'], [],
+            new ResolveInfo([])
+        );
 
         $this->token = $response->Token;
     }

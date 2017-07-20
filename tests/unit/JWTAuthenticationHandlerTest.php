@@ -29,8 +29,10 @@ class JWTAuthenticationHandlerTest extends SapphireTest
         $this->member = $this->objFromFixture(Member::class, 'admin');
         $createToken = Injector::inst()->get(CreateTokenMutationCreator::class);
 
-        $response = $createToken->resolve(null, ['Email' => 'admin@silverstripe.com', 'Password' => 'error'], [],
-            new ResolveInfo([]));
+        $response = $createToken->resolve(
+            null, ['Email' => 'admin@silverstripe.com', 'Password' => 'error'], [],
+            new ResolveInfo([])
+        );
 
         $this->token = $response->Token;
     }

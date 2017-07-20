@@ -2,7 +2,6 @@
 
 namespace Firesphere\GraphQLJWT\tests;
 
-
 use Firesphere\GraphQLJWT\CreateTokenMutationCreator;
 use Firesphere\GraphQLJWT\JWTAuthenticator;
 use Firesphere\GraphQLJWT\ValidateTokenQueryCreator;
@@ -30,8 +29,10 @@ class ValidateTokenQueryCreatorTest extends SapphireTest
         $this->member = $this->objFromFixture(Member::class, 'admin');
         $createToken = Injector::inst()->get(CreateTokenMutationCreator::class);
 
-        $response = $createToken->resolve(null, ['Email' => 'admin@silverstripe.com', 'Password' => 'error'], [],
-            new ResolveInfo([]));
+        $response = $createToken->resolve(
+            null, ['Email' => 'admin@silverstripe.com', 'Password' => 'error'], [],
+            new ResolveInfo([])
+        );
 
         $this->token = $response->Token;
     }

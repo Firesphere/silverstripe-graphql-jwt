@@ -1,13 +1,6 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: simon
- * Date: 28-Jun-17
- * Time: 18:10
- */
 
 namespace Firesphere\GraphQLJWT;
-
 
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
@@ -39,9 +32,9 @@ class RefreshTokenMutationCreator extends MutationCreator implements OperationRe
 
     /**
      * @todo Make it refresh things, it just returns an auth result now
-     * @param mixed $object
-     * @param array $args
-     * @param mixed $context
+     * @param mixed       $object
+     * @param array       $args
+     * @param mixed       $context
      * @param ResolveInfo $info
      * @return Token|string
      */

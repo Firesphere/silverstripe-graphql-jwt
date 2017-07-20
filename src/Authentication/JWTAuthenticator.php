@@ -24,8 +24,8 @@ class JWTAuthenticator extends MemberAuthenticator
     }
 
     /**
-     * @param array $data
-     * @param HTTPRequest $request
+     * @param array                 $data
+     * @param HTTPRequest           $request
      * @param ValidationResult|null $result
      * @return Member|null
      */
