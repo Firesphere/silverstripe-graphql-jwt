@@ -12,7 +12,6 @@ use SilverStripe\Security\Member;
 
 class CreateTokenMutationCreatorTest extends SapphireTest
 {
-
     protected static $fixture_file = '../fixtures/JWTAuthenticatorTest.yml';
 
     protected $member;
@@ -21,7 +20,6 @@ class CreateTokenMutationCreatorTest extends SapphireTest
     {
         parent::setUp();
         $this->member = $this->objFromFixture(Member::class, 'admin');
-
     }
 
     public function tearDown()

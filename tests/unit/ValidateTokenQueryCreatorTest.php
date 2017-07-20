@@ -30,7 +30,9 @@ class ValidateTokenQueryCreatorTest extends SapphireTest
         $createToken = Injector::inst()->get(CreateTokenMutationCreator::class);
 
         $response = $createToken->resolve(
-            null, ['Email' => 'admin@silverstripe.com', 'Password' => 'error'], [],
+            null,
+            ['Email' => 'admin@silverstripe.com', 'Password' => 'error'],
+            [],
             new ResolveInfo([])
         );
 

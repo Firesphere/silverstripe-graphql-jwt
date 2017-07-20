@@ -70,5 +70,4 @@ class JWTAuthenticationHandler implements AuthenticationHandler
         }
         Security::setCurrentUser(null);
     }
-
 }

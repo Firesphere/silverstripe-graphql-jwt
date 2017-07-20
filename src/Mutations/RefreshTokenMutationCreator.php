@@ -42,5 +42,4 @@ class RefreshTokenMutationCreator extends MutationCreator implements OperationRe
     {
         return 'TODO';
     }
-
 }

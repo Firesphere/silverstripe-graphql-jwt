@@ -2,7 +2,6 @@
 
 namespace Firesphere\GraphQLJWT\tests;
 
-
 use Firesphere\GraphQLJWT\CreateTokenMutationCreator;
 use Firesphere\GraphQLJWT\JWTAuthenticationHandler;
 use Firesphere\GraphQLJWT\JWTAuthenticator;
@@ -16,7 +15,6 @@ use SilverStripe\Security\Member;
 
 class JWTAuthenticationHandlerTest extends SapphireTest
 {
-
     protected static $fixture_file = '../fixtures/JWTAuthenticatorTest.yml';
 
     protected $member;
@@ -30,7 +28,9 @@ class JWTAuthenticationHandlerTest extends SapphireTest
         $createToken = Injector::inst()->get(CreateTokenMutationCreator::class);
 
         $response = $createToken->resolve(
-            null, ['Email' => 'admin@silverstripe.com', 'Password' => 'error'], [],
+            null,
+            ['Email' => 'admin@silverstripe.com', 'Password' => 'error'],
+            [],
             new ResolveInfo([])
         );
 
@@ -66,6 +66,5 @@ class JWTAuthenticationHandlerTest extends SapphireTest
         $result = $handler->authenticateRequest($request);
 
         $this->assertTrue($result instanceof Member);
-
     }
 }

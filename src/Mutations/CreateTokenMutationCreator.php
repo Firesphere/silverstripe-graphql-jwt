@@ -2,7 +2,6 @@
 
 namespace Firesphere\GraphQLJWT;
 
-
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Control\Controller;
@@ -69,5 +68,4 @@ class CreateTokenMutationCreator extends MutationCreator implements OperationRes
 
         return $member;
     }
-
 }
