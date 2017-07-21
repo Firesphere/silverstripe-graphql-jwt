@@ -31,6 +31,13 @@ class ValidateTokenQueryCreator extends QueryCreator implements OperationResolve
         return $this->manager->getType('ValidateToken');
     }
 
+    /**
+     * @param mixed $object
+     * @param array $args
+     * @param mixed $context
+     * @param ResolveInfo $info
+     * @return array
+     */
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
         $validator = Injector::inst()->get(JWTAuthenticator::class);
@@ -38,6 +45,7 @@ class ValidateTokenQueryCreator extends QueryCreator implements OperationResolve
         $request = Controller::curr()->getRequest();
         $authHeader = $request->getHeader('Authorization');
         $result = new ValidationResult();
+
         if ($authHeader && preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
             $validator->authenticate(['token' => $matches[1]], $request, $result);
         } else {

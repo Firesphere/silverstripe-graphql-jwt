@@ -4,9 +4,14 @@ namespace Firesphere\GraphQLJWT;
 
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
+use Lcobucci\JWT\Parser;
 use Lcobucci\JWT\Token;
+use LeKoala\DebugBar\Controller;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\MutationCreator;
 use SilverStripe\GraphQL\OperationResolver;
+use SilverStripe\ORM\ValidationResult;
+use SilverStripe\Security\Member;
 
 class RefreshTokenMutationCreator extends MutationCreator implements OperationResolver
 {
@@ -20,26 +25,59 @@ class RefreshTokenMutationCreator extends MutationCreator implements OperationRe
 
     public function type()
     {
-        return Type::string();
+        return $this->manager->getType('MemberToken');
     }
 
     public function args()
     {
-        return [
-            'ExpiredToken' => ['type' => Type::nonNull(Type::string())]
-        ];
+        return [];
     }
 
     /**
      * @todo Make it refresh things
-     * @param mixed       $object
-     * @param array       $args
-     * @param mixed       $context
+     * @param mixed $object
+     * @param array $args
+     * @param mixed $context
      * @param ResolveInfo $info
-     * @return Token|string
+     * @return Member|null
+     * @throws \BadMethodCallException
+     * @throws \OutOfBoundsException
      */
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
-        return '';
+        $request = Controller::curr()->getRequest();
+        $authHeader = $request->getHeader('Authorization');
+        $authenticator = Injector::inst()->get(JWTAuthenticator::class);
+        $member = null;
+        $result = new ValidationResult();
+        if ($authHeader && preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
+            $member = $authenticator->authenticate(['token' => $matches[1]], $request, $result);
+        }
+
+        $expired = false;
+        if ($member === null) {
+            foreach ($result->getMessages() as $message) {
+                if ($message['message'] === 'Token is expired') {
+                    // If expired is true, the rest of the token is valid, so we can refresh
+                    $expired = true;
+                    // @todo fix code duplication
+                    if (!$member && preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
+                        // We need a member, even if the result is false
+                        $parser = new Parser();
+                        $parsedToken = $parser->parse((string)$matches[1]);
+                        $member = Member::get()->byID($parsedToken->getClaim('uid'));
+                    }
+                }
+            }
+        }
+
+        if ($expired && $member) {
+            $member->Token = $authenticator->generateToken($member);
+        } else {
+            // Everything is wrong, give an empty member without token
+            $member = Member::create();
+        }
+
+        return $member;
     }
 }

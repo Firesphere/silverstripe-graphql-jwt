@@ -36,6 +36,13 @@ class CreateTokenMutationCreator extends MutationCreator implements OperationRes
         ];
     }
 
+    /**
+     * @param mixed $object
+     * @param array $args
+     * @param mixed $context
+     * @param ResolveInfo $info
+     * @return null|Member|static
+     */
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
         $security = Injector::inst()->get(Security::class);
@@ -63,6 +70,7 @@ class CreateTokenMutationCreator extends MutationCreator implements OperationRes
             Security::setCurrentUser(null);
             Injector::inst()->get(IdentityStore::class)->logOut();
 
+            // Return a token-less member
             return Member::create();
         }
 

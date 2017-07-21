@@ -39,6 +39,10 @@ class JWTAuthenticationHandler implements AuthenticationHandler
         $this->authenticator = $authenticator;
     }
 
+    /**
+     * @param HTTPRequest $request
+     * @return null|Member
+     */
     public function authenticateRequest(HTTPRequest $request)
     {
         $authHeader = $request->getHeader('Authorization');
@@ -56,11 +60,19 @@ class JWTAuthenticationHandler implements AuthenticationHandler
         return $member;
     }
 
+    /**
+     * @param Member $member
+     * @param bool $persistent
+     * @param HTTPRequest|null $request
+     */
     public function logIn(Member $member, $persistent = false, HTTPRequest $request = null)
     {
         Security::setCurrentUser($member);
     }
 
+    /**
+     * @param HTTPRequest|null $request
+     */
     public function logOut(HTTPRequest $request = null)
     {
         // A token can actually not be invalidated, only blacklisted
