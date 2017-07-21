@@ -3,10 +3,8 @@
 namespace Firesphere\GraphQLJWT;
 
 use GraphQL\Type\Definition\ResolveInfo;
-use GraphQL\Type\Definition\Type;
 use Lcobucci\JWT\Parser;
-use Lcobucci\JWT\Token;
-use LeKoala\DebugBar\Controller;
+use SilverStripe\Control\Controller;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\MutationCreator;
 use SilverStripe\GraphQL\OperationResolver;
