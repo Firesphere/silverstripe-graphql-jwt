@@ -8,7 +8,6 @@ use Firesphere\GraphQLJWT\JWTAuthenticator;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
-use SilverStripe\Control\Session;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
@@ -20,7 +19,7 @@ class JWTAuthenticationHandlerTest extends SapphireTest
 
     protected $member;
 
-    protected $request;
+    protected $token;
 
     public function setUp()
     {
@@ -35,9 +34,7 @@ class JWTAuthenticationHandlerTest extends SapphireTest
             new ResolveInfo([])
         );
 
-        $this->request = new HTTPRequest('POST', Director::absoluteBaseURL() . '/graphql');
-        $this->request->addHeader('Authorization', 'Bearer ' . $response->token);
-        $this->request->setSession(new Session(['test' => 'value'])); // We need a session
+        $this->token = $response->Token;
     }
 
     public function tearDown()
@@ -47,9 +44,12 @@ class JWTAuthenticationHandlerTest extends SapphireTest
 
     public function testAuthenticateRequest()
     {
+        $request = new HTTPRequest('POST', Director::absoluteBaseURL() . '/graphql');
+        $request->addHeader('Authorization', 'Bearer ' . $this->token);
+
         $handler = Injector::inst()->get(JWTAuthenticationHandler::class);
 
-        $result = $handler->authenticateRequest($this->request);
+        $result = $handler->authenticateRequest($request);
 
         $this->assertTrue($result instanceof Member);
     }
@@ -58,9 +58,12 @@ class JWTAuthenticationHandlerTest extends SapphireTest
     {
         Config::modify()->set(JWTAuthenticator::class, 'signer_key', 'string');
 
+        $request = new HTTPRequest('POST', Director::absoluteBaseURL() . '/graphql');
+        $request->addHeader('Authorization', 'Bearer ' . $this->token);
+
         $handler = Injector::inst()->get(JWTAuthenticationHandler::class);
 
-        $result = $handler->authenticateRequest($this->request);
+        $result = $handler->authenticateRequest($request);
 
         $this->assertTrue($result instanceof Member);
     }

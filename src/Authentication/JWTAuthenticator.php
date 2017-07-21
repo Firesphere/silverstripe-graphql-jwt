@@ -45,7 +45,6 @@ class JWTAuthenticator extends MemberAuthenticator
 
             return null;
         }
-
         /** @var Member $member */
         $member = Member::get()->byID($parsedToken->getClaim('uid'));
 
@@ -56,24 +55,20 @@ class JWTAuthenticator extends MemberAuthenticator
     {
         $config = static::config();
         $signer = new Sha256();
-        $tokenIDPrefix = $config->get('prefix');
-        $tokenID = uniqid($tokenIDPrefix, true);
 
-        $request = Controller::curr()->getRequest();
-        $audience = $request->getHeader('Origin');
+        $audience = Controller::curr()->getRequest()->getHeader('Origin');
 
         $builder = new Builder();
         $token = $builder
             ->setIssuer(Director::absoluteBaseURL())// Configures the issuer (iss claim)
             ->setAudience($audience)// Configures the audience (aud claim)
-            ->setId($tokenID, true)// Configures the id (jti claim), replicating as a header item
+            ->setId(uniqid($config->get('prefix'), true), true)// Configures the id (jti claim), replicating as a header item
             ->setIssuedAt(time())// Configures the time that the token was issue (iat claim)
             ->setNotBefore(time() + $config->get('nbf_time'))// Configures the time that the token can be used (nbf claim)
             ->setExpiration(time() + $config->get('nbf_expiration'))// Configures the expiration time of the token (nbf claim)
             ->set('uid', $member->ID)// Configures a new claim, called "uid"
             ->sign($signer, $config->get('signer_key'))
             ->getToken(); // Retrieves the generated token
-
 
         return $token;
     }
