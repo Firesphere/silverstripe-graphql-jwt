@@ -19,8 +19,3 @@ checks:
 filter:
   excluded_paths:
     - 'tests/*'
-coding_style:
-  php:
-    spaces:
-      other:
-        after_type_cast: false
