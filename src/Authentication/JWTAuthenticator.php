@@ -45,6 +45,11 @@ class JWTAuthenticator extends MemberAuthenticator
 
             return null;
         }
+        if ($parsedToken->isExpired()) {
+            $result->addError('Token is expired');
+
+            return null;
+        }
         /** @var Member $member */
         $member = Member::get()->byID($parsedToken->getClaim('uid'));
 

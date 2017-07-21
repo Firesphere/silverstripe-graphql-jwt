@@ -20,7 +20,7 @@ class RefreshTokenMutationCreator extends MutationCreator implements OperationRe
 
     public function type()
     {
-        return Type::string();//$this->manager->getType('member');
+        return Type::string();
     }
 
     public function args()
@@ -40,6 +40,6 @@ class RefreshTokenMutationCreator extends MutationCreator implements OperationRe
      */
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
-        return 'TODO';
+        return '';
     }
 }

@@ -8,6 +8,7 @@ use SilverStripe\Control\Controller;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\QueryCreator;
+use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Security\Member;
 
 class ValidateTokenQueryCreator extends QueryCreator implements OperationResolver
@@ -27,20 +28,28 @@ class ValidateTokenQueryCreator extends QueryCreator implements OperationResolve
 
     public function type()
     {
-        return Type::boolean();
+        return $this->manager->getType('ValidateToken');
     }
 
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
         $validator = Injector::inst()->get(JWTAuthenticator::class);
-
+        $msg = [];
         $request = Controller::curr()->getRequest();
         $authHeader = $request->getHeader('Authorization');
-        $member = null;
+        $result = new ValidationResult();
         if ($authHeader && preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
-            $member = $validator->authenticate(['token' => $matches[1]], $request);
+            $validator->authenticate(['token' => $matches[1]], $request, $result);
+        } else {
+            $result->addError('No Bearer token found');
         }
 
-        return $member instanceof Member;
+        foreach($result->getMessages() as $message) {
+            $msg[] = $message['message'];
+        }
+
+        $return = ['Valid' => $result->isValid(),'Message' => implode('; ', $msg)];
+
+        return $return;
     }
 }
