@@ -55,6 +55,7 @@ class RefreshTokenMutationCreator extends MutationCreator implements OperationRe
 
         $expired = false;
         if ($member === null) {
+            print_r('hello');
             foreach ($result->getMessages() as $message) {
                 if (strpos($message['message'], 'Token is expired') === 0) {
                     // If expired is true, the rest of the token is valid, so we can refresh
@@ -67,6 +68,8 @@ class RefreshTokenMutationCreator extends MutationCreator implements OperationRe
                     }
                 }
             }
+        } elseif ($member) {
+            $expired = true;
         }
 
         if ($expired && $member) {
