@@ -37,27 +37,26 @@ class ValidateTokenQueryCreator extends QueryCreator implements OperationResolve
      * @param mixed $context
      * @param ResolveInfo $info
      * @return array
+     * @throws \BadMethodCallException
      */
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
         $validator = Injector::inst()->get(JWTAuthenticator::class);
         $msg = [];
         $request = Controller::curr()->getRequest();
-        $authHeader = $request->getHeader('Authorization');
+        $matches = HeaderExtractor::getAuthorizationHeader($request);
         $result = new ValidationResult();
 
-        if ($authHeader && preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
+        if (!empty($matches[1])) {
             $validator->authenticate(['token' => $matches[1]], $request, $result);
         } else {
             $result->addError('No Bearer token found');
         }
 
-        foreach($result->getMessages() as $message) {
+        foreach ($result->getMessages() as $message) {
             $msg[] = $message['message'];
         }
 
-        $return = ['Valid' => $result->isValid(),'Message' => implode('; ', $msg)];
-
-        return $return;
+        return ['Valid' => $result->isValid(), 'Message' => implode('; ', $msg)];
     }
 }

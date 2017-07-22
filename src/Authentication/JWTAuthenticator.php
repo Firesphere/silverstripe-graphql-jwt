@@ -19,6 +19,11 @@ class JWTAuthenticator extends MemberAuthenticator
 {
     use Configurable;
 
+    /**
+     * JWT is stateless, therefore, we don't support anything but login
+     *
+     * @return int
+     */
     public function supportedServices()
     {
         return Authenticator::LOGIN | Authenticator::CMS_LOGIN;
@@ -48,7 +53,7 @@ class JWTAuthenticator extends MemberAuthenticator
             $result->addError('Invalid token');
         }
         if ($parsedToken->isExpired()) {
-            $result->addError('Token is expired');
+            $result->addError('Token is expired, please renew your token with a refreshToken query');
         }
         if ($parsedToken->getClaim('uid')) {
             /** @var Member $member */

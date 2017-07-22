@@ -42,19 +42,21 @@ class JWTAuthenticationHandler implements AuthenticationHandler
     /**
      * @param HTTPRequest $request
      * @return null|Member
+     * @throws \OutOfBoundsException
+     * @throws \BadMethodCallException
      */
     public function authenticateRequest(HTTPRequest $request)
     {
-        $authHeader = $request->getHeader('Authorization');
-        $member = null;
-        if ($authHeader && preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
+        $matches = HeaderExtractor::getAuthorizationHeader($request);
+        // Get the default user currently logged in via a different way, could be BasicAuth/normal login
+        $member = Security::getCurrentUser();
+
+        if (!empty($matches[1])) {
             $member = $this->authenticator->authenticate(['token' => $matches[1]], $request);
         }
+
         if ($member) {
             $this->logIn($member);
-        } else {
-            // Get the default user currently logged in via a different way, could be BasicAuth/normal login
-            $member = Security::getCurrentUser();
         }
 
         return $member;

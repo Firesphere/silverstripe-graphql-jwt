@@ -2,13 +2,11 @@
 
 namespace Firesphere\GraphQLJWT;
 
-
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\TypeCreator;
 
 class ValidateTokenTypeCreator extends TypeCreator
 {
-
     public function attributes()
     {
         return [

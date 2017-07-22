@@ -8,6 +8,11 @@
     "silverstripe/graphql": "0.2.*",
     "lcobucci/jwt": "^3.2"
   },
+  "require-dev": {
+    "friendsofphp/php-cs-fixer": "^2.4",
+    "phpunit/PHPUnit": "^5.7",
+    "scriptfusion/phpunit-immediate-exception-printer": "^1"
+  },
   "extra": {
     "branch-alias": {
       "dev-master": "1.0.x-dev"

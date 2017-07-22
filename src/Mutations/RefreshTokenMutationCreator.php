@@ -44,11 +44,12 @@ class RefreshTokenMutationCreator extends MutationCreator implements OperationRe
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
         $request = Controller::curr()->getRequest();
-        $authHeader = $request->getHeader('Authorization');
         $authenticator = Injector::inst()->get(JWTAuthenticator::class);
         $member = null;
         $result = new ValidationResult();
-        if ($authHeader && preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
+        $matches = HeaderExtractor::getAuthorizationHeader($request);
+
+        if (!empty($matches[1])) {
             $member = $authenticator->authenticate(['token' => $matches[1]], $request, $result);
         }
 
@@ -58,8 +59,7 @@ class RefreshTokenMutationCreator extends MutationCreator implements OperationRe
                 if ($message['message'] === 'Token is expired') {
                     // If expired is true, the rest of the token is valid, so we can refresh
                     $expired = true;
-                    // @todo fix code duplication
-                    if (!$member && preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
+                    if (!$member && !empty($matches[1])) {
                         // We need a member, even if the result is false
                         $parser = new Parser();
                         $parsedToken = $parser->parse((string)$matches[1]);

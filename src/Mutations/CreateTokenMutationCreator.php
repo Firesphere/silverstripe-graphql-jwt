@@ -42,6 +42,7 @@ class CreateTokenMutationCreator extends MutationCreator implements OperationRes
      * @param mixed $context
      * @param ResolveInfo $info
      * @return null|Member|static
+     * @throws \Psr\Container\NotFoundExceptionInterface
      */
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
@@ -71,7 +72,7 @@ class CreateTokenMutationCreator extends MutationCreator implements OperationRes
             Injector::inst()->get(IdentityStore::class)->logOut();
 
             // Return a token-less member
-            return Member::create();
+            $member = Member::create();
         }
 
         return $member;

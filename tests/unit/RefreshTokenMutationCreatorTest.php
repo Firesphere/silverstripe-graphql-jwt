@@ -2,7 +2,6 @@
 
 namespace Firesphere\GraphQLJWT\Tests;
 
-
 use Firesphere\GraphQLJWT\CreateTokenMutationCreator;
 use Firesphere\GraphQLJWT\JWTAuthenticator;
 use Firesphere\GraphQLJWT\RefreshTokenMutationCreator;
@@ -65,6 +64,5 @@ class RefreshTokenMutationCreatorTest extends SapphireTest
 
         $this->assertNotNull($response->Token);
         $this->assertTrue($response instanceof Member);
-
     }
 }
