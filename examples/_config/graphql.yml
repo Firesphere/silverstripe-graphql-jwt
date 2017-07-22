@@ -1,0 +1,8 @@
+SilverStripe\GraphQL\Controller:
+  schema:
+    types:
+      member: 'MySite\GraphQL\MemberTypeCreator'
+    queries:
+      readMembers: 'MySite\GraphQL\ReadMembersQueryCreator'
+    mutations:
+      createMember: 'MySite\GraphQL\CreateMemberMutationCreator'

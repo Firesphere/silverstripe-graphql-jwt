@@ -1,0 +1,107 @@
+{
+	"variables": [],
+	"info": {
+		"name": "graphql",
+		"_postman_id": "39aa10e0-1a83-245b-33d3-469da033d8ba",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "createMember",
+			"request": {
+				"url": "http://localhost:8080/graphql/",
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "query",
+							"value": "mutation {createMember(Email: \"my@user.com\", Password: \"myPass\") {\n    Token,\n   ID\n}}",
+							"description": "",
+							"type": "text"
+						}
+					]
+				},
+				"description": "Create member and request token back. This requires example code to be included later"
+			},
+			"response": []
+		},
+		{
+			"name": "readMembers",
+			"request": {
+				"url": "http://localhost:8080/graphql/",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer -Your-Token-",
+						"description": "Auth header"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "query",
+							"value": "{ readMembers {Email: Email,    Surname: Surname}}",
+							"description": "",
+							"type": "text"
+						}
+					]
+				},
+				"description": "Read the members. See the example codes to get it working."
+			},
+			"response": []
+		},
+		{
+			"name": "createToken",
+			"request": {
+				"url": "http://localhost:8080/graphql/",
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "query",
+							"value": "mutation { createToken(Email: \"admin\",    Password: \"password\"){ ID, Token}}",
+							"description": "",
+							"type": "text"
+						}
+					]
+				},
+				"description": "Create token for existing member"
+			},
+			"response": []
+		},
+		{
+			"name": "refreshToken",
+			"request": {
+				"url": "http://localhost:8080/graphql/",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer -Your-token-",
+						"description": "Auth header"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "query",
+							"value": "mutation {refreshToken {\n    Token,\n   ID\n}}",
+							"description": "",
+							"type": "text"
+						}
+					]
+				},
+				"description": "Replace the token in the Headers with your own (expired or not) token"
+			},
+			"response": []
+		}
+	]
+}

@@ -81,6 +81,10 @@ JWT is signed with multiple factors, including the host, audience (app/remote us
 
 By default, JWT only supports login. As it's tokens can not be disabled, nor used for password changes or resets.
 
+## Examples
+
+Example code can be found in the `examples` folder, together with a Postman set of example queries.
+
 # License
 
 This module is published under BSD 3-clause license, although these are not in the actual classes, the license does apply:

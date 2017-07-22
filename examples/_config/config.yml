@@ -1,0 +1,27 @@
+---
+Name: mysite
+---
+# YAML configuration for SilverStripe
+# See http://doc.silverstripe.org/framework/en/topics/configuration
+# Caution: Indentation through two spaces, not tabs
+SilverStripe\View\SSViewer:
+  themes:
+    - 'simple'
+    - '$default'
+---
+after: graphqljwt
+---
+Firesphere\GraphQLJWT\JWTAuthenticator:
+  prefix: 'jwt_'
+  nbf_time: 60
+  nbf_expiration: 3600
+  signer_key: 'MySite_jwt'
+  anonymous_allowed: true
+
+SilverStripe\GraphQL\Controller:
+  cors:
+    Enabled: true
+    Allow-Origin: '*'
+    Allow-Headers: 'Authorization, Content-Type'
+    Allow-Methods:  'GET, POST, OPTIONS'
+    Max-Age:  86400  # 86,400 seconds = 1 day.
