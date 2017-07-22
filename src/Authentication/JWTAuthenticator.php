@@ -8,7 +8,6 @@ use Lcobucci\JWT\Signer\Hmac\Sha256;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Core\Config\Configurable;
-use SilverStripe\Dev\Debug;
 use SilverStripe\GraphQL\Controller;
 use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Security\Authenticator;

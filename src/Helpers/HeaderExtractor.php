@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: simon
- * Date: 22-Jul-17
- * Time: 14:21
- */
 
 namespace Firesphere\GraphQLJWT;
 

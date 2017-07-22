@@ -65,6 +65,6 @@ class JWTAuthenticationHandlerTest extends SapphireTest
 
         $result = $handler->authenticateRequest($request);
 
-        $this->assertTrue($result instanceof Member);
+        $this->assertNull($result);
     }
 }

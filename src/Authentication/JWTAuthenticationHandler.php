@@ -3,9 +3,7 @@
 namespace Firesphere\GraphQLJWT;
 
 use SilverStripe\Control\HTTPRequest;
-use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Security\AuthenticationHandler;
-use SilverStripe\Security\IdentityStore;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
 

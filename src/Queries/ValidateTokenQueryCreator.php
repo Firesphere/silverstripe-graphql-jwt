@@ -3,13 +3,11 @@
 namespace Firesphere\GraphQLJWT;
 
 use GraphQL\Type\Definition\ResolveInfo;
-use GraphQL\Type\Definition\Type;
 use SilverStripe\Control\Controller;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\QueryCreator;
 use SilverStripe\ORM\ValidationResult;
-use SilverStripe\Security\Member;
 
 class ValidateTokenQueryCreator extends QueryCreator implements OperationResolver
 {
