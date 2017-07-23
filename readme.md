@@ -83,7 +83,7 @@ By default, JWT only supports login. As it's tokens can not be disabled, nor use
 
 ## Examples
 
-Example code can be found in the `examples` folder, together with a Postman set of example queries.
+A Postman collection can be found in the `extra` folder.
 
 # License
 
