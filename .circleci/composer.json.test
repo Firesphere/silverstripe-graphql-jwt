@@ -1,0 +1,36 @@
+{
+  "name": "firesphere/graphql-jwt-test",
+  "description": "Composer file for CircleCI Tests",
+  "require": {
+    "php": ">=5.6.0",
+    "silverstripe/admin": "1.0.x-dev",
+    "silverstripe/asset-admin": "1.0.x-dev",
+    "silverstripe/assets": "1.0.x-dev",
+    "silverstripe/campaign-admin": "1.0.x-dev",
+    "silverstripe/cms": "4.0.x-dev",
+    "silverstripe/config": "1.0.x-dev",
+    "silverstripe/errorpage": "1.0.x-dev",
+    "silverstripe/framework": "4.0.x-dev",
+    "silverstripe/graphql": "0.2.x-dev",
+    "silverstripe/reports": "4.0.x-dev",
+    "silverstripe/siteconfig": "4.0.x-dev",
+    "silverstripe/versioned": "1.0.x-dev",
+    "silverstripe-themes/simple": "~3.2.0",
+    "firesphere/graphql-jwt": "dev-master"
+  },
+  "require-dev": {
+    "scriptfusion/phpunit-immediate-exception-printer": "^1",
+    "phpunit/PHPUnit": "^5.7"
+  },
+  "extra": {
+    "branch-alias": {
+      "4.x-dev": "4.0.x-dev",
+      "dev-master": "5.x-dev"
+    }
+  },
+  "config": {
+    "process-timeout": 600
+  },
+  "prefer-stable": true,
+  "minimum-stability": "dev"
+}
