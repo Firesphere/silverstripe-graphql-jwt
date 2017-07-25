@@ -35,6 +35,8 @@ class ValidateTokenQueryCreator extends QueryCreator implements OperationResolve
      * @param mixed $context
      * @param ResolveInfo $info
      * @return array
+     * @throws \Psr\Container\NotFoundExceptionInterface
+     * @throws \OutOfBoundsException
      * @throws \BadMethodCallException
      */
     public function resolve($object, array $args, $context, ResolveInfo $info)
@@ -44,17 +46,25 @@ class ValidateTokenQueryCreator extends QueryCreator implements OperationResolve
         $request = Controller::curr()->getRequest();
         $matches = HeaderExtractor::getAuthorizationHeader($request);
         $result = new ValidationResult();
+        $code = 401;
 
         if (!empty($matches[1])) {
             $validator->authenticate(['token' => $matches[1]], $request, $result);
+            if ($result->isValid()) {
+                $code = 200;
+            }
         } else {
             $result->addError('No Bearer token found');
         }
 
         foreach ($result->getMessages() as $message) {
+            if (strpos($message['message'], 'Token is expired') === 0) {
+                // An expired token is code 423 `Update required`
+                $code = 426;
+            }
             $msg[] = $message['message'];
         }
 
-        return ['Valid' => $result->isValid(), 'Message' => implode('; ', $msg)];
+        return ['Valid' => $result->isValid(), 'Message' => implode('; ', $msg), 'Code' => $code];
     }
 }

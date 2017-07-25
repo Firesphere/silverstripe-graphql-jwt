@@ -17,8 +17,9 @@ class ValidateTokenTypeCreator extends TypeCreator
     public function fields()
     {
         return [
-            'Valid' => ['type' => Type::boolean()],
-            'Message' => ['type' => Type::string()]
+            'Valid'   => ['type' => Type::boolean()],
+            'Message' => ['type' => Type::string()],
+            'Code'    => ['type' => Type::int()],
         ];
     }
 }
