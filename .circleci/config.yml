@@ -39,24 +39,11 @@ jobs:
             php -r "unlink('composer-setup.php');"
 
       - run: composer create-project silverstripe/installer:dev-master ~/var/www -n
-
-      # Download and cache dependencies
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "composer.lock" }}
-            # fallback to using the latest cache if no exact match is found
-            - v1-dependencies-
-
       - run: composer require firesphere/silverstripe-graphql-jwt:dev-master -n
       - run: composer require scriptfusion/phpunit-immediate-exception-printer:^1
       - run: rm phpunit.xml.dist
       - run: cp graphql-jwt/phpunit.xml.dist .
       - run: framework/sake dev/build
-
-      - save_cache:
-          paths:
-            - ./vendor
-          key: v1-dependencies-{{ checksum "composer.lock" }}
 
       # run tests!
       - run: vendor/bin/phpunit graphql-jwt/tests/unit -d memory_limit=512M
