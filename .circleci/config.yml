@@ -30,8 +30,6 @@ jobs:
         - /feature.*/
 
     steps:
-      - run: git clone -b 4 https://github.com/silverstripe/silverstripe-installer.git ~/var/www
-
       # Install additional requirements
       - run:
           command: |
@@ -40,10 +38,12 @@ jobs:
             php composer-setup.php --install-dir=/usr/local/bin --filename=composer
             php -r "unlink('composer-setup.php');"
 
+      - run: composer create-project silverstripe/silverstripe:dev-master ~/var/www -n
+
       # Download and cache dependencies
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "composer.json" }}
+            - v1-dependencies-{{ checksum "composer.lock" }}
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
 
@@ -57,7 +57,7 @@ jobs:
       - save_cache:
           paths:
             - ./vendor
-          key: v1-dependencies-{{ checksum "composer.json" }}
+          key: v1-dependencies-{{ checksum "composer.lock" }}
 
       # run tests!
       - run: vendor/bin/phpunit graphql-jwt/tests/unit -d memory_limit=512M
