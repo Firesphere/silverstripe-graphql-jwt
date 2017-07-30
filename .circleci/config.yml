@@ -38,7 +38,7 @@ jobs:
             php composer-setup.php --install-dir=/usr/local/bin --filename=composer
             php -r "unlink('composer-setup.php');"
 
-      - run: composer create-project silverstripe/silverstripe:dev-master ~/var/www -n
+      - run: composer create-project silverstripe/installer:dev-master ~/var/www -n
 
       # Download and cache dependencies
       - restore_cache:
