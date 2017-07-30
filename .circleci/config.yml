@@ -47,7 +47,7 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
 
-      - run: composer require firesphere/silverstripe-graphql-jwt:dev-master
+      - run: composer require firesphere/silverstripe-graphql-jwt:dev-master -n
       - run: composer require scriptfusion/phpunit-immediate-exception-printer:^1
       - run: rm phpunit.xml.dist
       - run: cp graphql-jwt/phpunit.xml.dist .
