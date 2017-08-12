@@ -26,6 +26,6 @@ SilverStripe\Control\Director:
 name: graphqljwt
 ---
 Firesphere\GraphQLJWT\JWTAuthenticator:
-  nbf_time: 60
+  nbf_time: 0
   nbf_expiration: 3600
   anonymous_allowed: false

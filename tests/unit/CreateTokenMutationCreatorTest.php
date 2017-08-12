@@ -18,6 +18,8 @@ class CreateTokenMutationCreatorTest extends SapphireTest
 
     public function setUp()
     {
+        putenv('JWT_SIGNER_KEY=test_signer');
+
         parent::setUp();
         $this->member = $this->objFromFixture(Member::class, 'admin');
     }

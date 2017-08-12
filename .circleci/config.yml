@@ -15,7 +15,7 @@ jobs:
           - SS_DATABASE_NAME=circle_test
           - SS_ENVIRONMENT_TYPE=dev
           - JWT_PREFIX=jwt_
-          - JWT_SIGNER_KEY=SilverStripe_jwt
+          - JWT_SIGNER_KEY=test_signer
       - image: circleci/mysql:5.7
         environment:
           - MYSQL_USER=root

@@ -3,10 +3,15 @@
 namespace Firesphere\GraphQLJWT;
 
 use BadMethodCallException;
+use JWTException;
 use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\Parser;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
+use Lcobucci\JWT\Signer\Rsa\Sha256 as RsaSha256;
+use Lcobucci\JWT\Signer\Key;
 use Lcobucci\JWT\Token;
+use Lcobucci\JWT\ValidationData;
+use OutOfBoundsException;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Core\Config\Configurable;
@@ -20,6 +25,57 @@ use SilverStripe\Security\MemberAuthenticator\MemberAuthenticator;
 class JWTAuthenticator extends MemberAuthenticator
 {
     use Configurable;
+
+    /**
+     * @var Sha256|RsaSha256
+     */
+    private $signer;
+
+    /**
+     * @var string|Key;
+     */
+    private $privateKey;
+
+    /**
+     * @var string|Key;
+     */
+    private $publicKey;
+
+    /**
+     * JWTAuthenticator constructor.
+     * @throws JWTException
+     */
+    public function __construct()
+    {
+        $key = getenv('JWT_SIGNER_KEY');
+        if (empty($key)) {
+            throw new JWTException('No key defined!', 1);
+        }
+        $publicKeyLocation = getenv('JWT_PUBLIC_KEY');
+        if (file_exists($key) && !file_exists($publicKeyLocation)) {
+            throw new JWTException('No public key found!', 1);
+        }
+    }
+
+    /**
+     * Setup the keys this has to be done on the spot for if the signer changes between validation cycles
+     */
+    private function setKeys()
+    {
+        $signerKey = getenv('JWT_SIGNER_KEY');
+        // If it's a private key, we also need a public key for validation!
+        if (file_exists($signerKey)) {
+            $this->signer = new RsaSha256();
+            $password = getenv('JWT_KEY_PASSWORD');
+            $this->privateKey = new Key('file://' . $signerKey, $password ?: null);
+            // We're having an RSA signed key instead of a string
+            $this->publicKey = new Key('file://' . getenv('JWT_PUBLIC_KEY'));
+        } else {
+            $this->signer = new Sha256();
+            $this->privateKey = $signerKey;
+            $this->publicKey = $signerKey;
+        }
+    }
 
     /**
      * JWT is stateless, therefore, we don't support anything but login
@@ -36,8 +92,8 @@ class JWTAuthenticator extends MemberAuthenticator
      * @param HTTPRequest $request
      * @param ValidationResult|null $result
      * @return Member|null
-     * @throws \OutOfBoundsException
-     * @throws \BadMethodCallException
+     * @throws OutOfBoundsException
+     * @throws BadMethodCallException
      */
     public function authenticate(array $data, HTTPRequest $request, ValidationResult &$result = null)
     {
@@ -46,7 +102,7 @@ class JWTAuthenticator extends MemberAuthenticator
         }
         $token = $data['token'];
 
-        return $this->validateToken($token, $result);
+        return $this->validateToken($token, $request, $result);
     }
 
     /**
@@ -57,13 +113,12 @@ class JWTAuthenticator extends MemberAuthenticator
      */
     public function generateToken(Member $member)
     {
+        $this->setKeys();
         $config = static::config();
-        $signer = new Sha256();
         $uniqueID = uniqid(getenv('JWT_PREFIX'), true);
 
         $request = Controller::curr()->getRequest();
         $audience = $request->getHeader('Origin');
-        $signerKey = getenv('JWT_SIGNER_KEY');
 
         $builder = new Builder();
         $token = $builder
@@ -81,8 +136,8 @@ class JWTAuthenticator extends MemberAuthenticator
             ->setExpiration(time() + $config->get('nbf_expiration'))
             // Configures a new claim, called "uid"
             ->set('uid', $member->ID)
-            // Sign the key with the Signer's key @todo: support certificates
-            ->sign($signer, $signerKey);
+            // Sign the key with the Signer's key
+            ->sign($this->signer, $this->privateKey);
 
         // Save the member if it's not anonymous
         if ($member->ID > 0) {
@@ -96,33 +151,33 @@ class JWTAuthenticator extends MemberAuthenticator
 
     /**
      * @param string $token
+     * @param HTTPRequest $request
      * @param ValidationResult $result
      * @return null|Member
-     * @throws \OutOfBoundsException
-     * @throws \BadMethodCallException
+     * @throws BadMethodCallException
      */
-    private function validateToken($token, &$result)
+    private function validateToken($token, $request, &$result)
     {
+        $this->setKeys();
         $parser = new Parser();
         $parsedToken = $parser->parse((string)$token);
-        $signer = new Sha256();
-        $signerKey = getenv('JWT_SIGNER_KEY');
-        $member = null;
+
+        // Get a validator and the Member for this token
+        list($validator, $member) = $this->getValidator($request, $parsedToken);
+
+        $verified = $parsedToken->verify($this->signer, $this->publicKey);
+        $valid = $parsedToken->validate($validator);
 
         // If the token is not verified, just give up
-        if (!$parsedToken->verify($signer, $signerKey)) {
+        if (!$verified || !$valid) {
             $result->addError('Invalid token');
         }
         // An expired token can be renewed
-        elseif ($parsedToken->isExpired()) {
+        if (
+            $verified &&
+            $parsedToken->isExpired()
+        ) {
             $result->addError('Token is expired, please renew your token with a refreshToken query');
-        }
-        // Everything seems fine, let's find a user
-        elseif ($parsedToken->getClaim('uid') > 0 && $parsedToken->getClaim('jti')) {
-            /** @var Member $member */
-            $member = Member::get()
-                ->filter(['JWTUniqueID' => $parsedToken->getClaim('jti')])
-                ->byID($parsedToken->getClaim('uid'));
         }
         // Not entirely fine, do we allow anonymous users?
         // Then, if the token is valid, return an anonymous user
@@ -135,6 +190,33 @@ class JWTAuthenticator extends MemberAuthenticator
         }
 
         return $result->isValid() ? $member : null;
+    }
 
+    /**
+     * @param HTTPRequest $request
+     * @param Token $parsedToken
+     * @return array Contains a ValidationData and Member object
+     * @throws OutOfBoundsException
+     */
+    private function getValidator($request, $parsedToken)
+    {
+        $audience = $request->getHeader('Origin');
+
+        $member = null;
+        $id = null;
+        $validator = new ValidationData();
+        $validator->setIssuer(Director::absoluteBaseURL());
+        $validator->setAudience($audience);
+
+        if ($parsedToken->getClaim('uid') === 0 && static::config()->get('anonymous_allowed')) {
+            $id = $request->getSession()->get('jwt_uid');
+        } elseif ($parsedToken->getClaim('uid') > 0) {
+            $member = Member::get()->byID($parsedToken->getClaim('uid'));
+            $id = $member->JWTUniqueID;
+            }
+
+        $validator->setId($id);
+
+        return [$validator, $member];
     }
 }

@@ -41,8 +41,8 @@ class ValidateTokenQueryCreator extends QueryCreator implements OperationResolve
      */
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
-        /** @var JWTAuthenticator $validator */
-        $validator = Injector::inst()->get(JWTAuthenticator::class);
+        /** @var JWTAuthenticator $authenticator */
+        $authenticator = Injector::inst()->get(JWTAuthenticator::class);
         $msg = [];
         $request = Controller::curr()->getRequest();
         $matches = HeaderExtractor::getAuthorizationHeader($request);
@@ -50,7 +50,7 @@ class ValidateTokenQueryCreator extends QueryCreator implements OperationResolve
         $code = 401;
 
         if (!empty($matches[1])) {
-            $validator->authenticate(['token' => $matches[1]], $request, $result);
+            $authenticator->authenticate(['token' => $matches[1]], $request, $result);
             if ($result->isValid()) {
                 $code = 200;
             }

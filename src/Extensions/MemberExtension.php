@@ -2,7 +2,7 @@
 
 namespace Firesphere\GraphQLJWT;
 
-
+use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\ORM\DataExtension;
 
@@ -12,7 +12,6 @@ use SilverStripe\ORM\DataExtension;
  */
 class MemberExtension extends DataExtension
 {
-
     private static $db = [
         'JWTUniqueID' => 'Varchar(255)',
     ];
@@ -25,5 +24,21 @@ class MemberExtension extends DataExtension
     {
         parent::updateCMSFields($fields);
         $fields->removeByName(['JWTUniqueID']);
+        if ($this->owner->JWTUniqueID) {
+            $fields->addFieldsToTab(
+                'Root.Main',
+                [
+                    CheckboxField::create('reset', 'Reset the Token ID to disable this user\'s remote login')
+                ]
+            );
+        }
+    }
+
+    public function onBeforeWrite()
+    {
+        parent::onBeforeWrite();
+        if ($this->owner->reset) {
+            $this->owner->JWTUniqueID = null;
+        }
     }
 }

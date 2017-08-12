@@ -4,11 +4,9 @@ namespace Firesphere\GraphQLJWT\tests;
 
 use Firesphere\GraphQLJWT\CreateTokenMutationCreator;
 use Firesphere\GraphQLJWT\JWTAuthenticationHandler;
-use Firesphere\GraphQLJWT\JWTAuthenticator;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
-use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Security\Member;
@@ -23,6 +21,8 @@ class JWTAuthenticationHandlerTest extends SapphireTest
 
     public function setUp()
     {
+        putenv('JWT_SIGNER_KEY=test_signer');
+
         parent::setUp();
         $this->member = $this->objFromFixture(Member::class, 'admin');
         $createToken = Injector::inst()->get(CreateTokenMutationCreator::class);
@@ -42,6 +42,21 @@ class JWTAuthenticationHandlerTest extends SapphireTest
         parent::tearDown();
     }
 
+    public function testInvalidAuthenticateRequest()
+    {
+        putenv('JWT_SIGNER_KEY=string');
+
+        $request = new HTTPRequest('POST', Director::absoluteBaseURL() . '/graphql');
+        $request->addHeader('Authorization', 'Bearer ' . $this->token);
+
+        $handler = Injector::inst()->get(JWTAuthenticationHandler::class);
+
+        $result = $handler->authenticateRequest($request);
+        putenv('JWT_SIGNER_KEY=test_signer');
+
+        $this->assertNull($result);
+    }
+
     public function testAuthenticateRequest()
     {
         $request = new HTTPRequest('POST', Director::absoluteBaseURL() . '/graphql');
@@ -51,7 +66,7 @@ class JWTAuthenticationHandlerTest extends SapphireTest
 
         $result = $handler->authenticateRequest($request);
 
-        $this->assertTrue($result instanceof Member);
+        $this->assertInstanceOf(Member::class, $result);
+        $this->assertGreaterThan(0, $result->ID);
     }
-
 }

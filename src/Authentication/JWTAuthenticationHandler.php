@@ -3,6 +3,7 @@
 namespace Firesphere\GraphQLJWT;
 
 use SilverStripe\Control\HTTPRequest;
+use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\AuthenticationHandler;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
@@ -50,6 +51,7 @@ class JWTAuthenticationHandler implements AuthenticationHandler
         $member = Security::getCurrentUser();
 
         if (!empty($matches[1])) {
+            // Validate the token. This is critical for security
             $member = $this->authenticator->authenticate(['token' => $matches[1]], $request);
         }
 
@@ -75,13 +77,21 @@ class JWTAuthenticationHandler implements AuthenticationHandler
 
     /**
      * @param HTTPRequest|null $request
+     * @throws ValidationException
      */
     public function logOut(HTTPRequest $request = null)
     {
-        // A token can actually not be invalidated, only blacklisted
-        if ($request !== null) {
-            $request->getSession()->clear('jwt');
+        // A token can actually not be invalidated, but let's invalidate it's unique ID
+        // A member actually can be null though!
+        if ($request !== null) { // If we don't have a request, we're most probably in test mode
+            $member = Security::getCurrentUser();
+            if ($member) {
+                // Set the unique ID to 0, as it can't be nullified due to indexes.
+                $member->JWTUniqueID = 0;
+                $member->write();
+            }
         }
-        Security::setCurrentUser(null);
+        // Empty the current user and pray to god it's not valid anywhere else anymore :)
+        Security::setCurrentUser();
     }
 }

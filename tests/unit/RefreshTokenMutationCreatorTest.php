@@ -27,6 +27,8 @@ class RefreshTokenMutationCreatorTest extends SapphireTest
 
     public function setUp()
     {
+        putenv('JWT_SIGNER_KEY=test_signer');
+
         parent::setUp();
         $this->member = $this->objFromFixture(Member::class, 'admin');
         $createToken = Injector::inst()->get(CreateTokenMutationCreator::class);
@@ -79,7 +81,7 @@ class RefreshTokenMutationCreatorTest extends SapphireTest
         $response = $queryCreator->resolve(null, [], [], new ResolveInfo([]));
 
         $this->assertNotNull($response->Token);
-        $this->assertTrue($response instanceof Member);
+        $this->assertInstanceOf(Member::class, $response);
     }
 
     public function testAnonRefreshToken()
@@ -91,6 +93,6 @@ class RefreshTokenMutationCreatorTest extends SapphireTest
         $response = $queryCreator->resolve(null, [], [], new ResolveInfo([]));
 
         $this->assertNotNull($response->Token);
-        $this->assertTrue($response instanceof Member);
+        $this->assertInstanceOf(Member::class, $response);
     }
 }
