@@ -17,6 +17,7 @@ class HeaderExtractor
         if ($authHeader && preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
             return $matches;
         }
+
         return [0, null];
     }
 }

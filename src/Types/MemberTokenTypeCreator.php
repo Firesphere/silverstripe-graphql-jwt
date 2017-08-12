@@ -17,11 +17,11 @@ class MemberTokenTypeCreator extends TypeCreator
     public function fields()
     {
         return [
-            'ID' => ['type' => Type::int()],
+            'ID'        => ['type' => Type::int()],
             'FirstName' => ['type' => Type::string()],
-            'Surname' => ['type' => Type::string()],
-            'Email' => ['type' => Type::string()],
-            'Token' => ['type' => Type::string()]
+            'Surname'   => ['type' => Type::string()],
+            'Email'     => ['type' => Type::string()],
+            'Token'     => ['type' => Type::string()]
         ];
     }
 }

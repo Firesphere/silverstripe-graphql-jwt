@@ -107,10 +107,11 @@ class JWTAuthenticator extends MemberAuthenticator
             ->sign($signer, $signerKey);
 
         // Save the member if it's not anonymous
-        if($member->ID > 0) {
+        if ($member->ID > 0) {
             $member->JWTUniqueID = $uniqueID;
             $member->write();
         }
+
         // Return the token
         return $token->getToken();
     }

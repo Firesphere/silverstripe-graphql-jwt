@@ -14,7 +14,7 @@ class ValidateTokenQueryCreator extends QueryCreator implements OperationResolve
     public function attributes()
     {
         return [
-            'name' => 'validateToken',
+            'name'        => 'validateToken',
             'description' => 'Validates a given token from the Bearer header'
         ];
     }

@@ -16,7 +16,7 @@ class RefreshTokenMutationCreator extends MutationCreator implements OperationRe
     public function attributes()
     {
         return [
-            'name' => 'refreshToken',
+            'name'        => 'refreshToken',
             'description' => 'Refreshes a JWT token for a valid user. To be done'
         ];
     }
