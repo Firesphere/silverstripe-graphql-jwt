@@ -37,6 +37,8 @@ class RefreshTokenMutationCreator extends MutationCreator implements OperationRe
      * @param mixed $context
      * @param ResolveInfo $info
      * @return Member|null
+     * @throws \Psr\Container\NotFoundExceptionInterface
+     * @throws \SilverStripe\ORM\ValidationException
      * @throws \BadMethodCallException
      * @throws \OutOfBoundsException
      */
@@ -53,20 +55,19 @@ class RefreshTokenMutationCreator extends MutationCreator implements OperationRe
         }
 
         $expired = false;
-        if ($member === null) {
+        // If we have a valid member, or there are no matches, there's no reason to go in here
+        if ($member === null && !empty($matches[1])) {
             foreach ($result->getMessages() as $message) {
-                if (strpos($message['message'], 'Token is expired') === 0) {
+                if (strpos($message['message'], 'Token is expired') !== false) {
                     // If expired is true, the rest of the token is valid, so we can refresh
                     $expired = true;
-                    if (!empty($matches[1])) {
-                        // We need a member, even if the result is false
-                        $parser = new Parser();
-                        $parsedToken = $parser->parse((string)$matches[1]);
-                        /** @var Member $member */
-                        $member = Member::get()
-                            ->filter(['JWTUniqueID' => $parsedToken->getClaim('jti')])
-                            ->byID($parsedToken->getClaim('uid'));
-                    }
+                    // We need a member, even if the result is false
+                    $parser = new Parser();
+                    $parsedToken = $parser->parse((string)$matches[1]);
+                    /** @var Member $member */
+                    $member = Member::get()
+                        ->filter(['JWTUniqueID' => $parsedToken->getClaim('jti')])
+                        ->byID($parsedToken->getClaim('uid'));
                 }
             }
         } elseif ($member) {
