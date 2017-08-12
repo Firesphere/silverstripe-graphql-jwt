@@ -5,6 +5,8 @@ namespace Firesphere\GraphQLJWT\tests;
 use Firesphere\GraphQLJWT\CreateTokenMutationCreator;
 use Firesphere\GraphQLJWT\JWTAuthenticator;
 use GraphQL\Type\Definition\ResolveInfo;
+use Lcobucci\JWT\Parser;
+use Lcobucci\JWT\Token;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Core\Config\Config;
@@ -63,5 +65,21 @@ class JWTAuthenticatorTest extends SapphireTest
         $result = $authenticator->authenticate(['token' => $this->token], $request);
 
         $this->assertFalse($result instanceof Member);
+    }
+
+    public function testInvalidUniqueID()
+    {
+        $authenticator = Injector::inst()->get(JWTAuthenticator::class);
+        $request = new HTTPRequest('POST', Director::absoluteBaseURL() . '/graphql');
+        $request->addHeader('Authorization', 'Bearer ' . $this->token);
+
+        // Invalidate the Unique ID by making it something arbitrarily wrong
+        $member = Member::get()->filter(['Email' => 'admin@silverstripe.com'])->first();
+        $member->JWTUniqueID = 'make_error';
+        $member->write();
+
+        $result = $authenticator->authenticate(['token' => $this->token], $request);
+
+        $this->assertNull($result);
     }
 }

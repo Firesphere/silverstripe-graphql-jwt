@@ -2,13 +2,16 @@
 
 namespace Firesphere\GraphQLJWT;
 
+use BadMethodCallException;
 use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\Parser;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
+use Lcobucci\JWT\Token;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\GraphQL\Controller;
+use SilverStripe\ORM\ValidationException;
 use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Security\Authenticator;
 use SilverStripe\Security\Member;
@@ -33,7 +36,7 @@ class JWTAuthenticator extends MemberAuthenticator
      * @param HTTPRequest $request
      * @param ValidationResult|null $result
      * @return Member|null
-     * @throws \BadMethodCallException
+     * @throws BadMethodCallException
      * @throws \OutOfBoundsException
      */
     public function authenticate(array $data, HTTPRequest $request, ValidationResult &$result = null)
@@ -54,9 +57,14 @@ class JWTAuthenticator extends MemberAuthenticator
         if ($parsedToken->isExpired()) {
             $result->addError('Token is expired, please renew your token with a refreshToken query');
         }
-        if ($parsedToken->getClaim('uid')) {
+        if ($parsedToken->getClaim('uid') > 0 && $parsedToken->getClaim('jti')) {
             /** @var Member $member */
-            $member = Member::get()->byID($parsedToken->getClaim('uid'));
+            $member = Member::get()
+                ->filter(['JWTUniqueID' => $parsedToken->getClaim('jti')])
+                ->byID($parsedToken->getClaim('uid'));
+        }
+        if ($parsedToken->getClaim('uid') === 0 && $this->config()->get('anonymous_allowed')) {
+            $member = Member::create(['ID' => 0, 'FirstName' => 'Anonymous']);
         }
 
         return $result->isValid() ? $member : null;
@@ -64,8 +72,9 @@ class JWTAuthenticator extends MemberAuthenticator
 
     /**
      * @param Member $member
-     * @return \Lcobucci\JWT\Token
-     * @throws \BadMethodCallException
+     * @return Token
+     * @throws ValidationException
+     * @throws BadMethodCallException
      */
     public function generateToken(Member $member)
     {
@@ -96,6 +105,11 @@ class JWTAuthenticator extends MemberAuthenticator
             // Sign the key with the Signer's key @todo: support certificates
             ->sign($signer, $signerKey);
 
+        // Save the member if it's not anonymous
+        if($member->ID > 0) {
+            $member->JWTUniqueID = $uniqueID;
+            $member->write();
+        }
         // Return the token
         return $token->getToken();
     }

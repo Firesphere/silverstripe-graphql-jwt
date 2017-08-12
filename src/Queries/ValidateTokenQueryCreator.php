@@ -41,6 +41,7 @@ class ValidateTokenQueryCreator extends QueryCreator implements OperationResolve
      */
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
+        /** @var JWTAuthenticator $validator */
         $validator = Injector::inst()->get(JWTAuthenticator::class);
         $msg = [];
         $request = Controller::curr()->getRequest();
@@ -59,7 +60,7 @@ class ValidateTokenQueryCreator extends QueryCreator implements OperationResolve
 
         foreach ($result->getMessages() as $message) {
             if (strpos($message['message'], 'Token is expired') === 0) {
-                // An expired token is code 423 `Update required`
+                // An expired token is code 426 `Update required`
                 $code = 426;
             }
             $msg[] = $message['message'];
