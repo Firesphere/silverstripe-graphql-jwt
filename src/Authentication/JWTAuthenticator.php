@@ -51,19 +51,23 @@ class JWTAuthenticator extends MemberAuthenticator
         $signerKey = getenv('JWT_SIGNER_KEY');
         $member = null;
 
+        // If the token is not verified, just give up
         if (!$parsedToken->verify($signer, $signerKey)) {
             $result->addError('Invalid token');
+            return null;
         }
-        if ($parsedToken->isExpired()) {
+        // An expired token can be renewed
+        if ($parsedToken->isExpired() && $result->isValid()) {
             $result->addError('Token is expired, please renew your token with a refreshToken query');
         }
+        // Everything seems fine, let's find a user
         if ($parsedToken->getClaim('uid') > 0 && $parsedToken->getClaim('jti')) {
             /** @var Member $member */
             $member = Member::get()
                 ->filter(['JWTUniqueID' => $parsedToken->getClaim('jti')])
                 ->byID($parsedToken->getClaim('uid'));
         }
-        // An anonymous user
+        // Or not entirely fine, do we allow anonymous users?
         if ($parsedToken->getClaim('uid') === 0 && $this->config()->get('anonymous_allowed')) {
             $member = Member::create(['ID' => 0, 'FirstName' => 'Anonymous']);
         }
