@@ -63,6 +63,7 @@ class JWTAuthenticator extends MemberAuthenticator
                 ->filter(['JWTUniqueID' => $parsedToken->getClaim('jti')])
                 ->byID($parsedToken->getClaim('uid'));
         }
+        // An anonymous user
         if ($parsedToken->getClaim('uid') === 0 && $this->config()->get('anonymous_allowed')) {
             $member = Member::create(['ID' => 0, 'FirstName' => 'Anonymous']);
         }

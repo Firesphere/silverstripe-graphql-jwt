@@ -21,6 +21,10 @@ class RefreshTokenMutationCreatorTest extends SapphireTest
 
     protected $member;
 
+    protected $token;
+
+    protected $anonymousToken;
+
     public function setUp()
     {
         parent::setUp();
@@ -37,6 +41,14 @@ class RefreshTokenMutationCreatorTest extends SapphireTest
         );
 
         $this->token = $response->Token;
+        $response = $createToken->resolve(
+            null,
+            ['Email' => 'admin@silverstripe.com', 'Password' => 'notCorrect'],
+            [],
+            new ResolveInfo([])
+        );
+
+        $this->anonymousToken = $response->Token;
     }
 
     public function tearDown()
@@ -44,10 +56,14 @@ class RefreshTokenMutationCreatorTest extends SapphireTest
         parent::tearDown();
     }
 
-    private function buildRequest()
+    private function buildRequest($anonymous = false)
     {
+        $token = $this->token;
+        if ($anonymous) {
+            $token = $this->anonymousToken;
+        }
         $request = new HTTPRequest('POST', Director::absoluteBaseURL() . '/graphql');
-        $request->addHeader('Authorization', 'Bearer ' . $this->token);
+        $request->addHeader('Authorization', 'Bearer ' . $token);
 
         $request->setSession(new Session(['hello' => 'bye'])); // We need a session
         Controller::curr()->setRequest($request);
@@ -58,6 +74,18 @@ class RefreshTokenMutationCreatorTest extends SapphireTest
     public function testRefreshToken()
     {
         $this->buildRequest();
+
+        $queryCreator = Injector::inst()->get(RefreshTokenMutationCreator::class);
+        $response = $queryCreator->resolve(null, [], [], new ResolveInfo([]));
+
+        $this->assertNotNull($response->Token);
+        $this->assertTrue($response instanceof Member);
+    }
+
+    public function testAnonRefreshToken()
+    {
+        $this->buildRequest(true);
+        Config::modify()->set(JWTAuthenticator::class, 'anonymous_allowed', true);
 
         $queryCreator = Injector::inst()->get(RefreshTokenMutationCreator::class);
         $response = $queryCreator->resolve(null, [], [], new ResolveInfo([]));

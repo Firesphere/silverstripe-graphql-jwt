@@ -32,22 +32,41 @@ mutation {
 
 If you have an app and want to validate your token, you can address the `validateToken` method. E.g.:
 ```
-query {
-    validateToken
+query validateToken {
+    validateToken {
+      Valid
+      Message
+      Code
+    }
 }
 ```
 
 It only needs to call the endpoint. The token should be in the header, via your middleware for the request, as a `Authorization: Bearer 1235'piue,,54fxdg5`
 
 If the token is valid, you'll get a response like this:
-```
-data: {
-  validateToken: true
+```json
+{
+    "data": {
+        "validateToken": {
+            "Valid": true,
+            "Message": "",
+            "Code": 200,
+            "__typename": "ValidateToken"
+        }
+    }
 }
 ```
 
 And obviously the response is false when the token is invalid.
 
+## Anonymous tokens
+
+Although not advised, it's possible to use anonymous tokens which returns a member with an ID 0 and name Anonymous.
+To enable anonymous tokens, add the following to your configuration yml:
+```yaml
+Firesphere\GraphQLJWT\JWTAuthenticator:
+  anonymous_allowed: true
+```
 
 ## Enable CORS
 

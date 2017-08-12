@@ -39,6 +39,7 @@ class CreateTokenMutationCreatorTest extends SapphireTest
 
     public function testResolveInvalidWithAllowedAnonymous()
     {
+        Config::modify()->set(JWTAuthenticator::class, 'anonymous_allowed', true);
         $authenticator = Injector::inst()->get(CreateTokenMutationCreator::class);
 
         $response = $authenticator->resolve(null, ['Email' => 'admin@silverstripe.com', 'Password' => 'wrong'], [], new ResolveInfo([]));

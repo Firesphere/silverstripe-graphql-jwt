@@ -30,4 +30,4 @@ Firesphere\GraphQLJWT\JWTAuthenticator:
   nbf_time: 60
   nbf_expiration: 3600
   signer_key: 'SilverStripe_jwt'
-  anonymous_allowed: true
+  anonymous_allowed: false

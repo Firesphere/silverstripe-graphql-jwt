@@ -58,11 +58,14 @@ class RefreshTokenMutationCreator extends MutationCreator implements OperationRe
                 if (strpos($message['message'], 'Token is expired') === 0) {
                     // If expired is true, the rest of the token is valid, so we can refresh
                     $expired = true;
-                    if (!$member && !empty($matches[1])) {
+                    if (!empty($matches[1])) {
                         // We need a member, even if the result is false
                         $parser = new Parser();
                         $parsedToken = $parser->parse((string)$matches[1]);
-                        $member = Member::get()->byID($parsedToken->getClaim('uid'));
+                        /** @var Member $member */
+                        $member = Member::get()
+                            ->filter(['JWTUniqueID' => $parsedToken->getClaim('jti')])
+                            ->byID($parsedToken->getClaim('uid'));
                     }
                 }
             }
@@ -74,7 +77,11 @@ class RefreshTokenMutationCreator extends MutationCreator implements OperationRe
             $member->Token = $authenticator->generateToken($member);
         } else {
             // Everything is wrong, give an empty member without token
-            $member = Member::create();
+            $member = Member::create(['ID' => 0, 'FirstName' => 'Anonymous']);
+        }
+        // Maybe not _everything_, we possibly have an anonymous allowed user
+        if ($member->ID === 0 && JWTAuthenticator::config()->get('anonymous_allowed')) {
+            $member->Token = $authenticator->generateToken($member);
         }
 
         return $member;
