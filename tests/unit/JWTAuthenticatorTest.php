@@ -55,18 +55,6 @@ class JWTAuthenticatorTest extends SapphireTest
         $this->assertEquals($this->member->ID, $result->ID);
     }
 
-    public function testInvalidToken()
-    {
-        Config::modify()->set(JWTAuthenticator::class, 'signer_key', 'string');
-        $authenticator = Injector::inst()->get(JWTAuthenticator::class);
-        $request = new HTTPRequest('POST', Director::absoluteBaseURL() . '/graphql');
-        $request->addHeader('Authorization', 'Bearer ' . $this->token);
-
-        $result = $authenticator->authenticate(['token' => $this->token], $request);
-
-        $this->assertFalse($result instanceof Member);
-    }
-
     public function testInvalidUniqueID()
     {
         $authenticator = Injector::inst()->get(JWTAuthenticator::class);

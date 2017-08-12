@@ -14,6 +14,12 @@ This module provides a JWT-interface for creating JSON Web Tokens for authentica
 
 Currently, only dev-master is available, as it's in heavy development.
 
+The default config is available in `_config\config.yml`. To set your signer key and UID prefix, add the following to your `.ENV`:
+```
+JWT_PREFIX=mysupersecretprefix
+JWT_SIGNER_KEY=mysupersecretkey
+```
+
 ## Log in
 
 To generate a JWT token, send a login request to the `createToken` mutator. E.g.:

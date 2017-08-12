@@ -48,7 +48,7 @@ class JWTAuthenticator extends MemberAuthenticator
         $parser = new Parser();
         $parsedToken = $parser->parse((string)$token);
         $signer = new Sha256();
-        $signerKey = static::config()->get('signer_key');
+        $signerKey = getenv('JWT_SIGNER_KEY');
         $member = null;
 
         if (!$parsedToken->verify($signer, $signerKey)) {
@@ -81,11 +81,11 @@ class JWTAuthenticator extends MemberAuthenticator
     {
         $config = static::config();
         $signer = new Sha256();
-        $uniqueID = uniqid($config->get('prefix'), true);
+        $uniqueID = uniqid(getenv('JWT_PREFIX'), true);
 
         $request = Controller::curr()->getRequest();
         $audience = $request->getHeader('Origin');
-        $signerKey = $config->get('signer_key');
+        $signerKey = getenv('JWT_SIGNER_KEY');
 
         $builder = new Builder();
         $token = $builder

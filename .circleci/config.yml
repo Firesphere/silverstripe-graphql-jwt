@@ -13,7 +13,9 @@ jobs:
           - SS_DATABASE_USERNAME=root
           - SS_DATABASE_PASSWORD=ubuntu
           - SS_DATABASE_NAME=circle_test
-          - SS_ENVIRONMENT_TYPE=test
+          - SS_ENVIRONMENT_TYPE=dev
+          - JWT_PREFIX=jwt_
+          - JWT_SIGNER_KEY=SilverStripe_jwt
       - image: circleci/mysql:5.7
         environment:
           - MYSQL_USER=root

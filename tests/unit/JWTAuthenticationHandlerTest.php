@@ -54,17 +54,4 @@ class JWTAuthenticationHandlerTest extends SapphireTest
         $this->assertTrue($result instanceof Member);
     }
 
-    public function testInvalidAuthenticateRequest()
-    {
-        Config::modify()->set(JWTAuthenticator::class, 'signer_key', 'string');
-
-        $request = new HTTPRequest('POST', Director::absoluteBaseURL() . '/graphql');
-        $request->addHeader('Authorization', 'Bearer ' . $this->token);
-
-        $handler = Injector::inst()->get(JWTAuthenticationHandler::class);
-
-        $result = $handler->authenticateRequest($request);
-
-        $this->assertNull($result);
-    }
 }

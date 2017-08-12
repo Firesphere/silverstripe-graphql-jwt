@@ -65,18 +65,6 @@ class ValidateTokenQueryCreatorTest extends SapphireTest
         $this->assertTrue($response['Valid']);
     }
 
-    public function testValidateInvalidToken()
-    {
-        Config::modify()->set(JWTAuthenticator::class, 'signer_key', 'string');
-
-        $this->buildRequest();
-
-        $queryCreator = Injector::inst()->get(ValidateTokenQueryCreator::class);
-        $response = $queryCreator->resolve(null, [], [], new ResolveInfo([]));
-
-        $this->assertFalse($response['Valid']);
-    }
-
     public function testExpiredToken()
     {
         Config::modify()->set(JWTAuthenticator::class, 'nbf_expiration', -5);
