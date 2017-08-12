@@ -61,6 +61,9 @@ class JWTAuthenticationHandler implements AuthenticationHandler
     }
 
     /**
+     * Authenticate on every run, based on the header, not relying on sessions or cookies
+     * JSON Web Tokens are stateless
+     *
      * @param Member $member
      * @param bool $persistent
      * @param HTTPRequest|null $request

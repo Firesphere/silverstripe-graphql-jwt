@@ -36,8 +36,8 @@ class JWTAuthenticator extends MemberAuthenticator
      * @param HTTPRequest $request
      * @param ValidationResult|null $result
      * @return Member|null
-     * @throws BadMethodCallException
      * @throws \OutOfBoundsException
+     * @throws \BadMethodCallException
      */
     public function authenticate(array $data, HTTPRequest $request, ValidationResult &$result = null)
     {
@@ -45,34 +45,8 @@ class JWTAuthenticator extends MemberAuthenticator
             $result = new ValidationResult();
         }
         $token = $data['token'];
-        $parser = new Parser();
-        $parsedToken = $parser->parse((string)$token);
-        $signer = new Sha256();
-        $signerKey = getenv('JWT_SIGNER_KEY');
-        $member = null;
 
-        // If the token is not verified, just give up
-        if (!$parsedToken->verify($signer, $signerKey)) {
-            $result->addError('Invalid token');
-            return null;
-        }
-        // An expired token can be renewed
-        if ($parsedToken->isExpired() && $result->isValid()) {
-            $result->addError('Token is expired, please renew your token with a refreshToken query');
-        }
-        // Everything seems fine, let's find a user
-        if ($parsedToken->getClaim('uid') > 0 && $parsedToken->getClaim('jti')) {
-            /** @var Member $member */
-            $member = Member::get()
-                ->filter(['JWTUniqueID' => $parsedToken->getClaim('jti')])
-                ->byID($parsedToken->getClaim('uid'));
-        }
-        // Or not entirely fine, do we allow anonymous users?
-        if ($parsedToken->getClaim('uid') === 0 && $this->config()->get('anonymous_allowed')) {
-            $member = Member::create(['ID' => 0, 'FirstName' => 'Anonymous']);
-        }
-
-        return $result->isValid() ? $member : null;
+        return $this->validateToken($token, $result);
     }
 
     /**
@@ -118,5 +92,49 @@ class JWTAuthenticator extends MemberAuthenticator
 
         // Return the token
         return $token->getToken();
+    }
+
+    /**
+     * @param string $token
+     * @param ValidationResult $result
+     * @return null|Member
+     * @throws \OutOfBoundsException
+     * @throws \BadMethodCallException
+     */
+    private function validateToken($token, &$result)
+    {
+        $parser = new Parser();
+        $parsedToken = $parser->parse((string)$token);
+        $signer = new Sha256();
+        $signerKey = getenv('JWT_SIGNER_KEY');
+        $member = null;
+
+        // If the token is not verified, just give up
+        if (!$parsedToken->verify($signer, $signerKey)) {
+            $result->addError('Invalid token');
+        }
+        // An expired token can be renewed
+        elseif ($parsedToken->isExpired()) {
+            $result->addError('Token is expired, please renew your token with a refreshToken query');
+        }
+        // Everything seems fine, let's find a user
+        elseif ($parsedToken->getClaim('uid') > 0 && $parsedToken->getClaim('jti')) {
+            /** @var Member $member */
+            $member = Member::get()
+                ->filter(['JWTUniqueID' => $parsedToken->getClaim('jti')])
+                ->byID($parsedToken->getClaim('uid'));
+        }
+        // Not entirely fine, do we allow anonymous users?
+        // Then, if the token is valid, return an anonymous user
+        if (
+            $result->isValid() &&
+            $parsedToken->getClaim('uid') === 0 &&
+            static::config()->get('anonymous_allowed')
+        ) {
+            $member = Member::create(['ID' => 0, 'FirstName' => 'Anonymous']);
+        }
+
+        return $result->isValid() ? $member : null;
+
     }
 }
