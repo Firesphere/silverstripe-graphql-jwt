@@ -18,6 +18,7 @@ class MemberTokenTypeCreator extends TypeCreator
     {
         $string = Type::string();
         $id = Type::id();
+
         return [
             'ID'        => ['type' => $id],
             'FirstName' => ['type' => $string],

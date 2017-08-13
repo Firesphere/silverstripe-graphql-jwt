@@ -213,7 +213,7 @@ class JWTAuthenticator extends MemberAuthenticator
         } elseif ($parsedToken->getClaim('uid') > 0) {
             $member = Member::get()->byID($parsedToken->getClaim('uid'));
             $id = $member->JWTUniqueID;
-            }
+        }
 
         $validator->setId($id);
 
