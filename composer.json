@@ -4,7 +4,7 @@
   "type": "silverstripe-module",
   "require": {
     "php": ">=5.6",
-    "silverstripe/framework": "4.0.x-dev",
+    "silverstripe/framework": "4.0.0-beta2",
     "silverstripe/graphql": "0.2.*",
     "lcobucci/jwt": "^3.2"
   },
