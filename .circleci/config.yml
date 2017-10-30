@@ -40,7 +40,7 @@ jobs:
             php composer-setup.php --install-dir=/usr/local/bin --filename=composer
             php -r "unlink('composer-setup.php');"
 
-      - run: composer create-project firesphere/silverstripe-graphql-jwt:4.x-dev ~/var/www -n
+      - run: composer create-project firesphere/silverstripe-graphql-jwt:dev-master ~/var/www -n
       - run: vendor/bin/sake dev/build
 
       # run tests!
