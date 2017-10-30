@@ -117,15 +117,4 @@ class JWTAuthenticatorTest extends SapphireTest
         $result = $authenticator->authenticate(['token' => $token], $request);
         $this->assertNull($result);
     }
-
-    /**
-     * @expectedException JWTException
-     */
-    public function testNoPublicKey()
-    {
-        Environment::putEnv('JWT_SIGNER_KEY=graphql-jwt/tests/keys/private.key');
-        Environment::putEnv('JWT_PUBLIC_KEY');
-
-        new JWTAuthenticator();
-    }
 }
