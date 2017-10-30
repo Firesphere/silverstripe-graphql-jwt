@@ -1,7 +1,7 @@
 {
     "name": "firesphere/silverstripe-graphql-jwt",
     "description": "JWT Authentication for GraphQL",
-    "type": "silverstripe-module",
+    "type": "silverstripe-vendormodule",
     "require": {
         "php": ">=5.6",
         "silverstripe/recipe-core": "1.1.x-dev",
@@ -18,7 +18,7 @@
         "branch-alias": {
             "dev-master": "1.0.x-dev"
         },
-        "installer-name": "graphql-jwt",
+        "installer-name": "graphql-jwt"
     },
     "config": {
         "process-timeout": 600
