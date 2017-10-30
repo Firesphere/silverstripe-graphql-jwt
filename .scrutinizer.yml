@@ -1,4 +1,11 @@
+checks:
+  php: true
+
+build:
+  nodes:
+    analysis:
+      tests:
+        override: [php-scrutinizer-run]
+
 filter:
-    excluded_paths:
-        - "tests/"
-        - "examples/"
+  paths: ["src/*", "tests/*"]
