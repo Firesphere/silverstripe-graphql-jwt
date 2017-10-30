@@ -15,6 +15,7 @@ use OutOfBoundsException;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Core\Config\Configurable;
+use SilverStripe\Core\Environment;
 use SilverStripe\GraphQL\Controller;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\ORM\ValidationResult;
@@ -47,11 +48,11 @@ class JWTAuthenticator extends MemberAuthenticator
      */
     public function __construct()
     {
-        $key = getenv('JWT_SIGNER_KEY');
+        $key = Environment::getEnv('JWT_SIGNER_KEY');
         if (empty($key)) {
             throw new JWTException('No key defined!', 1);
         }
-        $publicKeyLocation = getenv('JWT_PUBLIC_KEY');
+        $publicKeyLocation = Environment::getEnv('JWT_PUBLIC_KEY');
         if (file_exists($key) && !file_exists($publicKeyLocation)) {
             throw new JWTException('No public key found!', 1);
         }
@@ -62,14 +63,14 @@ class JWTAuthenticator extends MemberAuthenticator
      */
     private function setKeys()
     {
-        $signerKey = getenv('JWT_SIGNER_KEY');
+        $signerKey = Environment::getEnv('JWT_SIGNER_KEY');
         // If it's a private key, we also need a public key for validation!
         if (file_exists($signerKey)) {
             $this->signer = new RsaSha256();
-            $password = getenv('JWT_KEY_PASSWORD');
+            $password = Environment::getEnv('JWT_KEY_PASSWORD');
             $this->privateKey = new Key('file://' . $signerKey, $password ?: null);
             // We're having an RSA signed key instead of a string
-            $this->publicKey = new Key('file://' . getenv('JWT_PUBLIC_KEY'));
+            $this->publicKey = new Key('file://' . Environment::getEnv('JWT_PUBLIC_KEY'));
         } else {
             $this->signer = new Sha256();
             $this->privateKey = $signerKey;
@@ -115,7 +116,7 @@ class JWTAuthenticator extends MemberAuthenticator
     {
         $this->setKeys();
         $config = static::config();
-        $uniqueID = uniqid(getenv('JWT_PREFIX'), true);
+        $uniqueID = uniqid(Environment::getEnv('JWT_PREFIX'), true);
 
         $request = Controller::curr()->getRequest();
         $audience = $request->getHeader('Origin');

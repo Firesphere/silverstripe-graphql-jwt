@@ -8,6 +8,7 @@ use GraphQL\Type\Definition\ResolveInfo;
 use JWTException;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
+use SilverStripe\Core\Environment;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Security\Member;
@@ -22,7 +23,7 @@ class JWTAuthenticatorTest extends SapphireTest
 
     public function setUp()
     {
-        putenv('JWT_SIGNER_KEY=test_signer');
+        Environment::putEnv('JWT_SIGNER_KEY=test_signer');
 
         parent::setUp();
         $this->member = $this->objFromFixture(Member::class, 'admin');
@@ -57,7 +58,7 @@ class JWTAuthenticatorTest extends SapphireTest
 
     public function testInvalidToken()
     {
-        putenv('JWT_SIGNER_KEY=string');
+        Environment::putEnv('JWT_SIGNER_KEY=string');
 
         $authenticator = Injector::inst()->get(JWTAuthenticator::class);
         $request = new HTTPRequest('POST', Director::absoluteBaseURL() . '/graphql');
@@ -67,7 +68,7 @@ class JWTAuthenticatorTest extends SapphireTest
 
         $this->assertNotInstanceOf(Member::class, $result);
 
-        putenv('JWT_SIGNER_KEY=test_signer');
+        Environment::putEnv('JWT_SIGNER_KEY=test_signer');
     }
 
     public function testInvalidUniqueID()
@@ -88,8 +89,8 @@ class JWTAuthenticatorTest extends SapphireTest
 
     public function testRSAKey()
     {
-        putenv('JWT_SIGNER_KEY=graphql-jwt/tests/keys/private.key');
-        putenv('JWT_PUBLIC_KEY=graphql-jwt/tests/keys/public.pub');
+        Environment::putEnv('JWT_SIGNER_KEY=graphql-jwt/tests/keys/private.key');
+        Environment::putEnv('JWT_PUBLIC_KEY=graphql-jwt/tests/keys/public.pub');
 
         $createToken = Injector::inst()->get(CreateTokenMutationCreator::class);
 
@@ -111,7 +112,7 @@ class JWTAuthenticatorTest extends SapphireTest
         $this->assertInstanceOf(Member::class, $result);
         $this->assertEquals($this->member->ID, $result->ID);
 
-        putenv('JWT_SIGNER_KEY=test_signer');
+        Environment::putEnv('JWT_SIGNER_KEY=test_signer');
         // After changing the key to a string, the token should be invalid
         $result = $authenticator->authenticate(['token' => $token], $request);
         $this->assertNull($result);
@@ -122,8 +123,8 @@ class JWTAuthenticatorTest extends SapphireTest
      */
     public function testNoPublicKey()
     {
-        putenv('JWT_SIGNER_KEY=graphql-jwt/tests/keys/private.key');
-        putenv('JWT_PUBLIC_KEY=');
+        Environment::putEnv('JWT_SIGNER_KEY=graphql-jwt/tests/keys/private.key');
+        Environment::putEnv('JWT_PUBLIC_KEY');
 
         new JWTAuthenticator();
     }

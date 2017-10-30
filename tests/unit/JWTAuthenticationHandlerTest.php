@@ -7,6 +7,7 @@ use Firesphere\GraphQLJWT\JWTAuthenticationHandler;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
+use SilverStripe\Core\Environment;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Security\Member;
@@ -21,7 +22,7 @@ class JWTAuthenticationHandlerTest extends SapphireTest
 
     public function setUp()
     {
-        putenv('JWT_SIGNER_KEY=test_signer');
+        Environment::putEnv('JWT_SIGNER_KEY=test_signer');
 
         parent::setUp();
         $this->member = $this->objFromFixture(Member::class, 'admin');
@@ -44,7 +45,7 @@ class JWTAuthenticationHandlerTest extends SapphireTest
 
     public function testInvalidAuthenticateRequest()
     {
-        putenv('JWT_SIGNER_KEY=string');
+        Environment::putEnv('JWT_SIGNER_KEY=string');
 
         $request = new HTTPRequest('POST', Director::absoluteBaseURL() . '/graphql');
         $request->addHeader('Authorization', 'Bearer ' . $this->token);
@@ -52,7 +53,7 @@ class JWTAuthenticationHandlerTest extends SapphireTest
         $handler = Injector::inst()->get(JWTAuthenticationHandler::class);
 
         $result = $handler->authenticateRequest($request);
-        putenv('JWT_SIGNER_KEY=test_signer');
+        Environment::putEnv('JWT_SIGNER_KEY=test_signer');
 
         $this->assertNull($result);
     }
