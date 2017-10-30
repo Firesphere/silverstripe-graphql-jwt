@@ -40,12 +40,11 @@ jobs:
             php composer-setup.php --install-dir=/usr/local/bin --filename=composer
             php -r "unlink('composer-setup.php');"
 
-      - run: composer create-project silverstripe/installer:dev-master ~/var/www -n
-      - run: composer require firesphere/silverstripe-graphql-jwt:dev-master -n
+      - run: composer create-project firesphere/silverstripe-graphql-jwt:dev-master -n
       - run: composer require scriptfusion/phpunit-immediate-exception-printer:^1
-      - run: rm phpunit.xml.dist
-      - run: cp graphql-jwt/phpunit.xml.dist .
-      - run: framework/sake dev/build
+      - run: vendor/silverstripe/framework/sake dev/build
 
       # run tests!
-      - run: vendor/bin/phpunit graphql-jwt/tests/unit -d memory_limit=512M
+      - run: vendor/bin/phpunit --coverage-clover=coverage.xml -d memory_limit=512M tests/unit
+      - run: bash <(curl -s https://codecov.io/bash) -f coverage.xml
+
