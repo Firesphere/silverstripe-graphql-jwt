@@ -1,0 +1,3 @@
+ignore: # Ignoring irrelevant code. Default SS stuff should not be called out by Codecoverage
+  - "src/Exceptions"
+  - "src/Extensions"
