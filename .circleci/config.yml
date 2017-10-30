@@ -40,9 +40,8 @@ jobs:
             php composer-setup.php --install-dir=/usr/local/bin --filename=composer
             php -r "unlink('composer-setup.php');"
 
-      - run: composer create-project firesphere/silverstripe-graphql-jwt:dev-master -n
-      - run: composer require scriptfusion/phpunit-immediate-exception-printer:^1
-      - run: vendor/silverstripe/framework/sake dev/build
+      - run: composer create-project firesphere/silverstripe-graphql-jwt:4.x-dev ~/var/www -n
+      - run: vendor/bin/sake dev/build
 
       # run tests!
       - run: vendor/bin/phpunit --coverage-clover=coverage.xml -d memory_limit=512M tests/unit
