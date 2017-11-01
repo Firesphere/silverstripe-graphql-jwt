@@ -1,6 +1,6 @@
 <?php
 
-namespace Firesphere\GraphQLJWT;
+namespace Firesphere\GraphQLJWT\Extensions;
 
 use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Forms\FieldList;

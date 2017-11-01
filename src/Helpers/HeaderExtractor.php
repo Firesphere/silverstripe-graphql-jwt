@@ -1,6 +1,6 @@
 <?php
 
-namespace Firesphere\GraphQLJWT;
+namespace Firesphere\GraphQLJWT\Helpers;
 
 use SilverStripe\Control\HTTPRequest;
 

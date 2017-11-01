@@ -3,4 +3,4 @@ name: GraphQLJWT
 ---
 SilverStripe\Security\Member:
   extensions:
-    - Firesphere\GraphQLJWT\MemberExtension
+    - Firesphere\GraphQLJWT\Extensions\MemberExtension

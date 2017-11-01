@@ -1,6 +1,6 @@
 <?php
 
-namespace Firesphere\GraphQLJWT;
+namespace Firesphere\GraphQLJWT\Types;
 
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\TypeCreator;

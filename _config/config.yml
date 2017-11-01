@@ -6,10 +6,10 @@ SilverStripe\Core\Injector\Injector:
     class: SilverStripe\Security\RequestAuthenticationHandler
     properties:
       Handlers:
-         jwt: %$Firesphere\GraphQLJWT\JWTAuthenticationHandler
+         jwt: %$Firesphere\GraphQLJWT\Authentication\JWTAuthenticationHandler
   Firesphere\GraphQLJWT\JWTAuthenticationHandler:
     properties:
-      Authenticator: %$Firesphere\GraphQLJWT\JWTAuthenticator
+      Authenticator: %$Firesphere\GraphQLJWT\Authentication\JWTAuthenticator
 ---
 after: graphqlroutes
 ---
@@ -25,7 +25,7 @@ SilverStripe\Control\Director:
 ---
 name: graphqljwt
 ---
-Firesphere\GraphQLJWT\JWTAuthenticator:
+Firesphere\GraphQLJWT\Authentication\JWTAuthenticator:
   nbf_time: 0
   nbf_expiration: 3600
   anonymous_allowed: false

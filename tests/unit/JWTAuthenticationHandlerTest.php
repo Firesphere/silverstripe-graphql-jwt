@@ -2,8 +2,8 @@
 
 namespace Firesphere\GraphQLJWT\tests;
 
-use Firesphere\GraphQLJWT\CreateTokenMutationCreator;
-use Firesphere\GraphQLJWT\JWTAuthenticationHandler;
+use Firesphere\GraphQLJWT\Authentication\JWTAuthenticationHandler;
+use Firesphere\GraphQLJWT\Mutations\CreateTokenMutationCreator;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;

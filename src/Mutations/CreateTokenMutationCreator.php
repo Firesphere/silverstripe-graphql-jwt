@@ -1,7 +1,8 @@
 <?php
 
-namespace Firesphere\GraphQLJWT;
+namespace Firesphere\GraphQLJWT\Mutations;
 
+use Firesphere\GraphQLJWT\Authentication\JWTAuthenticator;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Control\Controller;

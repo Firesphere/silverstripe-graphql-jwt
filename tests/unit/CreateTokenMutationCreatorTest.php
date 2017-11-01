@@ -2,8 +2,8 @@
 
 namespace Firesphere\GraphQLJWT\Tests;
 
-use Firesphere\GraphQLJWT\CreateTokenMutationCreator;
-use Firesphere\GraphQLJWT\JWTAuthenticator;
+use Firesphere\GraphQLJWT\Authentication\JWTAuthenticator;
+use Firesphere\GraphQLJWT\Mutations\CreateTokenMutationCreator;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Environment;

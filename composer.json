@@ -25,7 +25,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Firesphere\\GraphQLJWT\\": "src"
+            "Firesphere\\GraphQLJWT\\Authentication\\": "src/Authentication",
+            "Firesphere\\GraphQLJWT\\Extensions\\": "src/Extensions",
+            "Firesphere\\GraphQLJWT\\Helpers\\": "src/Helpers",
+            "Firesphere\\GraphQLJWT\\Mutations\\": "src/Mutations",
+            "Firesphere\\GraphQLJWT\\Queries\\": "src/Queries",
+            "Firesphere\\GraphQLJWT\\Types\\": "src/Types"
         }
     },
     "prefer-stable": true,

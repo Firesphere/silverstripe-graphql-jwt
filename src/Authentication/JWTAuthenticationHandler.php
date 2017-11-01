@@ -1,7 +1,8 @@
 <?php
 
-namespace Firesphere\GraphQLJWT;
+namespace Firesphere\GraphQLJWT\Authentication;
 
+use Firesphere\GraphQLJWT\Helpers\HeaderExtractor;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\AuthenticationHandler;

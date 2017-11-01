@@ -1,6 +1,6 @@
 <?php
 
-namespace Firesphere\GraphQLJWT;
+namespace Firesphere\GraphQLJWT\Authentication;
 
 use BadMethodCallException;
 use JWTException;
