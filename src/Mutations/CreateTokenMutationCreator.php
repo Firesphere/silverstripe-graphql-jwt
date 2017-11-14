@@ -47,12 +47,14 @@ class CreateTokenMutationCreator extends MutationCreator implements OperationRes
      */
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
+        /** @var Security $security */
         $security = Injector::inst()->get(Security::class);
         $authenticators = $security->getApplicableAuthenticators(Authenticator::LOGIN);
         $request = Controller::curr()->getRequest();
         $member = null;
 
         if (count($authenticators)) {
+            /** @var Authenticator $authenticator */
             foreach ($authenticators as $authenticator) {
                 $member = $authenticator->authenticate($args, $request, $result);
                 if ($result->isValid()) {

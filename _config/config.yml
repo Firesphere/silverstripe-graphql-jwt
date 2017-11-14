@@ -6,7 +6,7 @@ SilverStripe\Core\Injector\Injector:
     properties:
       Handlers:
          jwt: %$Firesphere\GraphQLJWT\Authentication\JWTAuthenticationHandler
-  Firesphere\GraphQLJWT\JWTAuthenticationHandler:
+  Firesphere\GraphQLJWT\Authentication\JWTAuthenticationHandler:
     properties:
       Authenticator: %$Firesphere\GraphQLJWT\Authentication\JWTAuthenticator
 ---
