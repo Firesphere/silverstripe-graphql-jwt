@@ -3,7 +3,6 @@ after: graphqlconfig
 ---
 SilverStripe\Core\Injector\Injector:
   SilverStripe\Security\AuthenticationHandler:
-    class: SilverStripe\Security\RequestAuthenticationHandler
     properties:
       Handlers:
          jwt: %$Firesphere\GraphQLJWT\Authentication\JWTAuthenticationHandler

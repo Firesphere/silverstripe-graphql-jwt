@@ -1,10 +1,10 @@
 SilverStripe\GraphQL\Controller:
   schema:
     types:
-      MemberToken: 'Firesphere\GraphQLJWT\MemberTokenTypeCreator'
-      ValidateToken: 'Firesphere\GraphQLJWT\ValidateTokenTypeCreator'
+      MemberToken: 'Firesphere\GraphQLJWT\Types\MemberTokenTypeCreator'
+      ValidateToken: 'Firesphere\GraphQLJWT\Types\ValidateTokenTypeCreator'
     mutations:
-      createToken: 'Firesphere\GraphQLJWT\CreateTokenMutationCreator'
-      refreshToken: 'Firesphere\GraphQLJWT\RefreshTokenMutationCreator'
+      createToken: 'Firesphere\GraphQLJWT\Mutations\CreateTokenMutationCreator'
+      refreshToken: 'Firesphere\GraphQLJWT\Mutations\RefreshTokenMutationCreator'
     queries:
-      validateToken: 'Firesphere\GraphQLJWT\ValidateTokenQueryCreator'
+      validateToken: 'Firesphere\GraphQLJWT\Queries\ValidateTokenQueryCreator'
