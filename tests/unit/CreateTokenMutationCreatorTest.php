@@ -34,8 +34,12 @@ class CreateTokenMutationCreatorTest extends SapphireTest
     {
         $createToken = Injector::inst()->get(CreateTokenMutationCreator::class);
 
-        $response = $createToken->resolve(null, ['Email' => 'admin@silverstripe.com', 'Password' => 'error'], [],
-            new ResolveInfo([]));
+        $response = $createToken->resolve(
+            null,
+            ['Email' => 'admin@silverstripe.com', 'Password' => 'error'],
+            [],
+            new ResolveInfo([])
+        );
 
         $this->assertTrue($response instanceof Member);
         $this->assertNotNull($response->Token);
@@ -46,8 +50,12 @@ class CreateTokenMutationCreatorTest extends SapphireTest
         Config::modify()->set(JWTAuthenticator::class, 'anonymous_allowed', true);
         $authenticator = Injector::inst()->get(CreateTokenMutationCreator::class);
 
-        $response = $authenticator->resolve(null, ['Email' => 'admin@silverstripe.com', 'Password' => 'wrong'], [],
-            new ResolveInfo([]));
+        $response = $authenticator->resolve(
+            null,
+            ['Email' => 'admin@silverstripe.com', 'Password' => 'wrong'],
+            [],
+            new ResolveInfo([])
+        );
 
         $this->assertTrue($response instanceof Member);
         $this->assertEquals(0, $response->ID);
@@ -59,8 +67,12 @@ class CreateTokenMutationCreatorTest extends SapphireTest
         Config::modify()->set(JWTAuthenticator::class, 'anonymous_allowed', false);
         $authenticator = Injector::inst()->get(CreateTokenMutationCreator::class);
 
-        $response = $authenticator->resolve(null, ['Email' => 'admin@silverstripe.com', 'Password' => 'wrong'], [],
-            new ResolveInfo([]));
+        $response = $authenticator->resolve(
+            null,
+            ['Email' => 'admin@silverstripe.com', 'Password' => 'wrong'],
+            [],
+            new ResolveInfo([])
+        );
 
         $this->assertTrue($response instanceof Member);
         $this->assertNull($response->Token);
