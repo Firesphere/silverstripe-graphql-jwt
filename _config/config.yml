@@ -23,6 +23,8 @@ SilverStripe\Control\Director:
       Permissions: false
 ---
 name: graphqljwt
+after:
+  - '#coresecurity'
 ---
 Firesphere\GraphQLJWT\Authentication\JWTAuthenticator:
   nbf_time: 0
