@@ -11,19 +11,17 @@ This module provides a JWT-interface for creating JSON Web Tokens for authentica
 
 ## Installation
 
-`composer require firesphere/silverstripe-graphql-jwt`
-
-Currently, only dev-master is available, as it's in heavy development.
+`composer require firesphere/graphql-jwt`
 
 The default config is available in `_config\config.yml`. 
 
-To set your signer key and UID prefix, add the following to your `.ENV`:
+To set your signer key and UID prefix, add the following to your `.env`:
 ```
 JWT_PREFIX=mysupersecretprefix
 JWT_SIGNER_KEY=mysupersecretkey
 ```
 
-Or, if you want to use a public and private key, set the following in your `.ENV`:
+Or, if you want to use a public and private key, set the following in your `.env`:
 ```
 JWT_SIGNER_KEY="path/to/your/private.key"
 JWT_PUBLIC_KEY="path/to/your/public.key"
@@ -131,7 +129,7 @@ A Postman collection can be found in the `extra` folder.
 
 This module is published under BSD 3-clause license, although these are not in the actual classes, the license does apply:
 
-http://www.opensource.org/licenses/BSD-2-Clause
+http://www.opensource.org/licenses/BSD-3-Clause
 
 Copyright (c) 2012-NOW(), Simon "Sphere" Erkelens
 
