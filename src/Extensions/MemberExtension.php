@@ -54,15 +54,16 @@ class MemberExtension extends DataExtension
     public function getJWTData()
     {
         $data = new SubjectData();
-        if ($this->owner->exists()) {
-            $identifier = Member::config()->get('unique_identifier_field');
-            $extraFields = Member::config()->get('jwt_subject_fields');
-            $data->setId($this->owner->ID);
-            $data->setUserName($this->owner->$identifier);
-            if (is_array($extraFields)) {
-                foreach ($extraFields as $field) {
-                    $data->$field = $this->owner->$field;
-                }
+        $identifier = Member::config()->get('unique_identifier_field');
+        $extraFields = Member::config()->get('jwt_subject_fields');
+
+        $data->setId($this->owner->ID);
+        $data->setUserName($this->owner->$identifier);
+
+        if (is_array($extraFields)) {
+            foreach ($extraFields as $field) {
+                $dataField = lcfirst($field);
+                $data->$dataField = $this->owner->$field;
             }
         }
 

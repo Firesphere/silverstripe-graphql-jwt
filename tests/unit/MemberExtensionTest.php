@@ -37,15 +37,14 @@ class MemberExtensionTest extends SapphireTest
     {
         /** @var Member $member */
         $member = $this->objFromFixture(Member::class, 'admin');
-        $member->FirstName = 'Test';
         $member->Surname = 'Member';
         Config::modify()->set(Member::class, 'jwt_subject_fields', ['FirstName', 'LastName']);
 
         $data = $member->getJWTData();
         $result = Convert::json2obj($data);
 
-        $this->assertEquals('Test', $result->FirstName);
-        $this->assertEquals('Member', $result->Surname);
+        $this->assertEquals('Admin', $result->firstName);
+        $this->assertEquals('Member', $result->surname);
     }
 
     public function testNoMember()
@@ -53,6 +52,6 @@ class MemberExtensionTest extends SapphireTest
         $data = Member::create()->getJWTData();
         $result = Convert::json2obj($data);
 
-        $this->assertNull($result->id);
+        $this->assertFalse(property_exists($result, 'id'));
     }
 }
