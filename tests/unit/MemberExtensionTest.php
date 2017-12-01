@@ -28,7 +28,6 @@ class MemberExtensionTest extends SapphireTest
         $member = $this->objFromFixture(Member::class, 'admin');
         $data = $member->getJWTData();
         $result = Convert::json2obj($data);
-        $this->assertInstanceOf(SubjectData::class, $result);
 
         $this->assertEquals($member->ID, $result->id);
         $this->assertEquals($member->Email, $result->userName);
@@ -53,7 +52,7 @@ class MemberExtensionTest extends SapphireTest
     {
         $data = Member::create()->getJWTData();
         $result = Convert::json2obj($data);
-        
+
         $this->assertNull($result->id);
     }
 }
