@@ -2,7 +2,6 @@
 
 namespace Firesphere\GraphQLJWT\Extensions;
 
-use Firesphere\GraphQLJWT\Helpers\SubjectData;
 use SilverStripe\Core\Convert;
 use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Forms\FieldList;
@@ -53,12 +52,12 @@ class MemberExtension extends DataExtension
      */
     public function getJWTData()
     {
-        $data = new SubjectData();
+        $data = new stdClass();
         $identifier = Member::config()->get('unique_identifier_field');
         $extraFields = Member::config()->get('jwt_subject_fields');
 
-        $data->setId($this->owner->ID);
-        $data->setUserName($this->owner->$identifier);
+        $data->id = $this->owner->ID;
+        $data->userName = $this->owner->$identifier;
 
         if (is_array($extraFields)) {
             foreach ($extraFields as $field) {

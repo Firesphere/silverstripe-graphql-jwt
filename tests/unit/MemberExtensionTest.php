@@ -8,7 +8,6 @@
 
 namespace Firesphere\GraphQLJWT\Tests;
 
-use Firesphere\GraphQLJWT\Helpers\SubjectData;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Convert;
 use SilverStripe\Dev\SapphireTest;
