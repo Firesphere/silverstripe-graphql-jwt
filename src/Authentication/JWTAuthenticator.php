@@ -124,9 +124,9 @@ class JWTAuthenticator extends MemberAuthenticator
         $builder = new Builder();
         $token = $builder
             // Configures the issuer (iss claim)
-            ->setIssuer(Director::absoluteBaseURL())
+            ->setIssuer($audience)
             // Configures the audience (aud claim)
-            ->setAudience($audience)
+            ->setAudience(Director::absoluteBaseURL())
             // Configures the id (jti claim), replicating as a header item
             ->setId($uniqueID, true)
             // Configures the time that the token was issue (iat claim)
@@ -137,6 +137,8 @@ class JWTAuthenticator extends MemberAuthenticator
             ->setExpiration(time() + $config->get('nbf_expiration'))
             // Configures a new claim, called "uid"
             ->set('uid', $member->ID)
+            // Set the subject, which is the member
+            ->setSubject($member->getJWTData())
             // Sign the key with the Signer's key
             ->sign($this->signer, $this->privateKey);
 
@@ -206,8 +208,8 @@ class JWTAuthenticator extends MemberAuthenticator
         $member = null;
         $id = null;
         $validator = new ValidationData();
-        $validator->setIssuer(Director::absoluteBaseURL());
-        $validator->setAudience($audience);
+        $validator->setIssuer($audience);
+        $validator->setAudience(Director::absoluteBaseURL());
 
         if ($parsedToken->getClaim('uid') === 0 && static::config()->get('anonymous_allowed')) {
             $id = $request->getSession()->get('jwt_uid');

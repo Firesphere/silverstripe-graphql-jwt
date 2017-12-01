@@ -2,9 +2,12 @@
 
 namespace Firesphere\GraphQLJWT\Extensions;
 
+use SilverStripe\Core\Convert;
 use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\ORM\DataExtension;
+use SilverStripe\Security\Member;
+use stdClass;
 
 /**
  * Class MemberExtension
@@ -40,5 +43,28 @@ class MemberExtension extends DataExtension
         if ($this->owner->reset) {
             $this->owner->JWTUniqueID = null;
         }
+    }
+
+    /**
+     * Option to add data to the JWT Subject
+     *
+     * @return string
+     */
+    public function getJWTData()
+    {
+        $data = new stdClass();
+        if ($this->owner->exists()) {
+            $identifier = Member::config()->get('unique_identifier_field');
+            $extraFields = Member::config()->get('jwt_subject_fields');
+            $data->id = $this->owner->ID;
+            $data->userName = $this->owner->$identifier;
+            if (is_array($extraFields)) {
+                foreach ($extraFields as $field) {
+                    $data->$field = $this->owner->$field;
+                }
+            }
+        }
+
+        return Convert::raw2json($data);
     }
 }
