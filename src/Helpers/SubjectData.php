@@ -2,10 +2,8 @@
 
 namespace Firesphere\GraphQLJWT\Helpers;
 
-
 class SubjectData
 {
-
     protected $id;
 
     protected $userName;

@@ -8,7 +8,6 @@
 
 namespace Firesphere\GraphQLJWT\Tests;
 
-
 use Firesphere\GraphQLJWT\Helpers\SubjectData;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Convert;
@@ -54,9 +53,7 @@ class MemberExtensionTest extends SapphireTest
     {
         $data = Member::create()->getJWTData();
         $result = Convert::json2obj($data);
-
-        $this->assertInstanceOf(SubjectData::class, $result);
-
+        
         $this->assertNull($result->id);
     }
 }
