@@ -38,7 +38,7 @@ class MemberExtensionTest extends SapphireTest
         /** @var Member $member */
         $member = $this->objFromFixture(Member::class, 'admin');
         $member->Surname = 'Member';
-        Config::modify()->set(Member::class, 'jwt_subject_fields', ['FirstName', 'LastName']);
+        Config::modify()->set(Member::class, 'jwt_subject_fields', ['FirstName', 'Surname']);
 
         $data = $member->getJWTData();
         $result = Convert::json2obj($data);
