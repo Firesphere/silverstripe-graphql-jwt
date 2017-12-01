@@ -26,10 +26,10 @@ class MemberExtensionTest extends SapphireTest
     public function testMemberExists()
     {
         $member = $this->objFromFixture(Member::class, 'admin');
+
         $data = $member->getJWTData();
         $result = Convert::json2obj($data);
 
-        $this->assertEquals($member->ID, $result->id);
         $this->assertEquals($member->Email, $result->userName);
     }
 
