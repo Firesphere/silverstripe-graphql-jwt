@@ -51,6 +51,6 @@ class MemberExtensionTest extends SapphireTest
         $data = Member::create()->getJWTData();
         $result = Convert::json2obj($data);
 
-        $this->assertFalse(property_exists($result, 'id'));
+        $this->assertEquals(0, $result->ID);
     }
 }
