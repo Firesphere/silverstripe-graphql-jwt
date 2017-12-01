@@ -49,8 +49,8 @@ class MemberExtensionTest extends SapphireTest
     public function testNoMember()
     {
         $data = Member::create()->getJWTData();
-        $result = Convert::json2obj($data);
+        $result = Convert::json2array($data);
 
-        $this->assertEquals(0, $result->ID);
+        $this->assertEquals(0, $result['id']);
     }
 }
