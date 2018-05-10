@@ -14,6 +14,10 @@ class HeaderExtractor
     public static function getAuthorizationHeader(HTTPRequest $request)
     {
         $authHeader = $request->getHeader('Authorization');
+        if (!$authHeader && isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+            $authHeader = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+        }
+        
         if ($authHeader && preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
             return $matches;
         }
