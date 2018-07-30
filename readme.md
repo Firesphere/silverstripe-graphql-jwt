@@ -121,6 +121,10 @@ Only one device can be logged in at the time.
 
 By default, JWT only supports login. As it's tokens can not be disabled, nor used for password changes or resets.
 
+## Caveats
+
+When using php under CGI/FastCGI mode with Apache, the `Authorization` header might not work correctly, see [issue#15](https://github.com/Firesphere/silverstripe-graphql-jwt/issues/15). The workaround is simple, just add `SetEnvIf Authorization .+ HTTP_AUTHORIZATION=$0` in your `.htaccess` file ([refer](http://php.net/manual/en/features.http-auth.php#114877)). 
+
 ## Examples
 
 A Postman collection can be found in the `extra` folder.
