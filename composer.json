@@ -7,7 +7,7 @@
     "php": ">=5.6",
     "silverstripe/recipe-core": "^4.0",
     "silverstripe/versioned": "^1.0",
-    "silverstripe/graphql": "^2.0",
+    "silverstripe/graphql": "^3.0",
     "lcobucci/jwt": "^3.2"
   },
   "require-dev": {
