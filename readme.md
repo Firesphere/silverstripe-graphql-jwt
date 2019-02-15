@@ -4,6 +4,8 @@
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/Firesphere/silverstripe-graphql-jwt/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/Firesphere/silverstripe-graphql-jwt/?branch=master)
 [![codecov](https://codecov.io/gh/Firesphere/silverstripe-graphql-jwt/branch/master/graph/badge.svg)](https://codecov.io/gh/Firesphere/silverstripe-graphql-jwt)
 
+[![Gitstore](https://enjoy.gitstore.app/repositories/badge-Firesphere/silverstripe-graphql-jwt.svg)](https://enjoy.gitstore.app/repositories/Firesphere/silverstripe-graphql-jwt)
+
 
 # GraphQL JSON Web Token authenticator
 
