@@ -2,47 +2,42 @@
 
 namespace Firesphere\GraphQLJWT\Extensions;
 
+use Firesphere\GraphQLJWT\Model\JWTRecord;
 use SilverStripe\Core\Convert;
-use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\ORM\DataExtension;
+use SilverStripe\ORM\HasManyList;
 use SilverStripe\Security\Member;
 use stdClass;
 
 /**
  * Class MemberExtension
  * Add a unique token to the Member for extra validation
+ *
+ * @property $owner Member|self
+ * @method HasManyList|JWTRecord[] AuthTokens()
  */
 class MemberExtension extends DataExtension
 {
-    private static $db = [
-        'JWTUniqueID' => 'Varchar(255)',
-    ];
+    /**
+     * List of names of extra subject fields to add to JWT token
+     *
+     * @config
+     * @var array
+     */
+    private static $jwt_subject_fields = [];
 
-    private static $indexes = [
-        'JWTUniqueID' => 'unique'
+    /**
+     * @config
+     * @var array
+     */
+    private static $has_many = [
+        'AuthTokens' => JWTRecord::class,
     ];
 
     public function updateCMSFields(FieldList $fields)
     {
-        parent::updateCMSFields($fields);
-        $fields->removeByName(['JWTUniqueID']);
-        if ($this->owner->JWTUniqueID) {
-            $fields->addFieldsToTab(
-                'Root.Main',
-                [
-                    CheckboxField::create('reset', 'Reset the Token ID to disable this user\'s remote login')
-                ]
-            );
-        }
-    }
-
-    public function onBeforeWrite()
-    {
-        parent::onBeforeWrite();
-        if ($this->owner->reset) {
-            $this->owner->JWTUniqueID = null;
-        }
+        $fields->removeByName('AuthTokens');
     }
 
     /**
@@ -56,6 +51,7 @@ class MemberExtension extends DataExtension
         $identifier = Member::config()->get('unique_identifier_field');
         $extraFields = Member::config()->get('jwt_subject_fields');
 
+        $data->type = 'member';
         $data->id = $this->owner->ID;
         $data->userName = $this->owner->$identifier;
 

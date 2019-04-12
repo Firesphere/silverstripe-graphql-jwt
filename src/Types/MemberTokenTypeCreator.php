@@ -2,9 +2,13 @@
 
 namespace Firesphere\GraphQLJWT\Types;
 
+use App\Users\GraphQL\Types\TokenStatusEnum;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\TypeCreator;
 
+/**
+ * Represents a member / token pair
+ */
 class MemberTokenTypeCreator extends TypeCreator
 {
     public function attributes()
@@ -16,15 +20,12 @@ class MemberTokenTypeCreator extends TypeCreator
 
     public function fields()
     {
-        $string = Type::string();
-        $id = Type::id();
-
         return [
-            'ID'        => ['type' => $id],
-            'FirstName' => ['type' => $string],
-            'Surname'   => ['type' => $string],
-            'Email'     => ['type' => $string],
-            'Token'     => ['type' => $string]
+            'Valid'  => ['type' => Type::boolean()],
+            'Member' => ['type' => $this->manager->getType('Member')],
+            'Token'  => ['type' => Type::string()],
+            'Status' => ['type' => TokenStatusEnum::instance()],
+            'Code'   => ['type' => Type::int()],
         ];
     }
 }

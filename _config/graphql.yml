@@ -2,8 +2,9 @@ SilverStripe\GraphQL\Controller:
   schema:
     types:
       MemberToken: 'Firesphere\GraphQLJWT\Types\MemberTokenTypeCreator'
-      ValidateToken: 'Firesphere\GraphQLJWT\Types\ValidateTokenTypeCreator'
+      Member: 'Firesphere\GraphQLJWT\Types\MemberTypeCreator'
     mutations:
+      createAnonymousToken: 'Firesphere\GraphQLJWT\Mutations\CreateAnonymousTokenMutationCreator'
       createToken: 'Firesphere\GraphQLJWT\Mutations\CreateTokenMutationCreator'
       refreshToken: 'Firesphere\GraphQLJWT\Mutations\RefreshTokenMutationCreator'
     queries:

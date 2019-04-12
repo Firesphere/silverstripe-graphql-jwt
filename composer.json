@@ -1,39 +1,39 @@
 {
-  "name": "firesphere/graphql-jwt",
-  "description": "JWT Authentication for GraphQL",
-  "type": "silverstripe-vendormodule",
-  "license": "bsd-3-clause",
-  "require": {
-    "php": ">=5.6",
-    "silverstripe/recipe-core": "^4.0",
-    "silverstripe/versioned": "^1.0",
-    "silverstripe/graphql": "^3.0",
-    "lcobucci/jwt": "^3.2"
-  },
-  "require-dev": {
-    "friendsofphp/php-cs-fixer": "^2.4",
-    "phpunit/PHPUnit": "^5.7",
-    "scriptfusion/phpunit-immediate-exception-printer": "^1"
-  },
-  "extra": {
-    "branch-alias": {
-      "dev-master": "1.0.x-dev"
+    "name": "firesphere/graphql-jwt",
+    "description": "JWT Authentication for GraphQL",
+    "type": "silverstripe-vendormodule",
+    "license": "bsd-3-clause",
+    "require": {
+        "php": ">=5.6",
+        "silverstripe/framework": "^4.3",
+        "silverstripe/graphql": "^3.0",
+        "lcobucci/jwt": "^3.2",
+        "ext-json": "*"
     },
-    "installer-name": "graphql-jwt"
-  },
-  "config": {
-    "process-timeout": 600
-  },
-  "autoload": {
-    "psr-4": {
-      "Firesphere\\GraphQLJWT\\Authentication\\": "src/Authentication",
-      "Firesphere\\GraphQLJWT\\Extensions\\": "src/Extensions",
-      "Firesphere\\GraphQLJWT\\Helpers\\": "src/Helpers",
-      "Firesphere\\GraphQLJWT\\Mutations\\": "src/Mutations",
-      "Firesphere\\GraphQLJWT\\Queries\\": "src/Queries",
-      "Firesphere\\GraphQLJWT\\Types\\": "src/Types"
-    }
-  },
-  "prefer-stable": true,
-  "minimum-stability": "dev"
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^2.4",
+        "phpunit/phpunit": "^5.7",
+        "scriptfusion/phpunit-immediate-exception-printer": "^1"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.x-dev"
+        },
+        "installer-name": "graphql-jwt"
+    },
+    "config": {
+        "process-timeout": 600
+    },
+    "autoload": {
+        "psr-4": {
+            "Firesphere\\GraphQLJWT\\Authentication\\": "src/Authentication",
+            "Firesphere\\GraphQLJWT\\Extensions\\": "src/Extensions",
+            "Firesphere\\GraphQLJWT\\Helpers\\": "src/Helpers",
+            "Firesphere\\GraphQLJWT\\Mutations\\": "src/Mutations",
+            "Firesphere\\GraphQLJWT\\Queries\\": "src/Queries",
+            "Firesphere\\GraphQLJWT\\Types\\": "src/Types"
+        }
+    },
+    "prefer-stable": true,
+    "minimum-stability": "dev"
 }
