@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Firesphere\GraphQLJWT\Authentication;
 
@@ -6,11 +6,10 @@ use App\Users\GraphQL\Types\TokenStatusEnum;
 use BadMethodCallException;
 use Exception;
 use Firesphere\GraphQLJWT\Extensions\MemberExtension;
-use Firesphere\GraphQLJWT\Helpers\GeneratesTokenOutput;
+use Firesphere\GraphQLJWT\Helpers\MemberTokenGenerator;
 use Firesphere\GraphQLJWT\Helpers\PathResolver;
 use Firesphere\GraphQLJWT\Helpers\RequiresConfig;
 use Firesphere\GraphQLJWT\Model\JWTRecord;
-use InvalidArgumentException;
 use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\Parser;
 use Lcobucci\JWT\Signer;
@@ -25,6 +24,7 @@ use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Environment;
+use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\ORM\ValidationResult;
@@ -34,22 +34,10 @@ use SilverStripe\Security\MemberAuthenticator\MemberAuthenticator;
 
 class JWTAuthenticator extends MemberAuthenticator
 {
+    use Injectable;
     use Configurable;
     use RequiresConfig;
-    use GeneratesTokenOutput;
-
-    /**
-     * Set to true if HTTP error responses are preferred instead of 200 for verification.
-     * If set to false, verification will return status error.
-     *
-     * Some front-end libraries require non-200 error codes to trigger error handling.
-     *
-     * Note: This only handles 400 errors, not 500 server errors such as mis-configuration, or bad code,
-     * which will still throw exceptions as normal.
-     *
-     * @var bool
-     */
-    private static $prefer_http_errors = true;
+    use MemberTokenGenerator;
 
     /**
      * Set to true to allow anonymous JWT tokens (no member record / email / password)
@@ -84,7 +72,7 @@ class JWTAuthenticator extends MemberAuthenticator
     /**
      * @return Signer
      */
-    protected function getSigner()
+    protected function getSigner(): Signer
     {
         $signerKey = $this->getEnv('JWT_SIGNER_KEY');
         if (PathResolver::resolve($signerKey)) {
@@ -99,7 +87,7 @@ class JWTAuthenticator extends MemberAuthenticator
      *
      * @return Key
      */
-    protected function getPrivateKey()
+    protected function getPrivateKey(): Key
     {
         $signerKey = $this->getEnv('JWT_SIGNER_KEY');
         $signerPath = PathResolver::resolve($signerKey);
@@ -116,7 +104,7 @@ class JWTAuthenticator extends MemberAuthenticator
      * @return Key
      * @throws LogicException
      */
-    private function getPublicKey()
+    private function getPublicKey(): Key
     {
         $signerKey = Environment::getEnv('JWT_SIGNER_KEY');
         $signerPath = PathResolver::resolve($signerKey);
@@ -139,7 +127,7 @@ class JWTAuthenticator extends MemberAuthenticator
      *
      * @return int
      */
-    public function supportedServices()
+    public function supportedServices(): int
     {
         return Authenticator::LOGIN;
     }
@@ -153,14 +141,14 @@ class JWTAuthenticator extends MemberAuthenticator
      * @throws BadMethodCallException
      * @throws Exception
      */
-    public function authenticate(array $data, HTTPRequest $request, ValidationResult &$result = null)
+    public function authenticate(array $data, HTTPRequest $request, ValidationResult &$result = null): ?Member
     {
         if (!$result) {
             $result = new ValidationResult();
         }
         $token = $data['token'];
 
-        /** @var JWTRecord $token */
+        /** @var JWTRecord $record */
         list($record, $status) = $this->validateToken($token, $request);
 
         // Report success!
@@ -181,27 +169,20 @@ class JWTAuthenticator extends MemberAuthenticator
      * Generate a new JWT token for a given request, and optional (if anonymous_allowed) user
      *
      * @param HTTPRequest            $request
-     * @param string                 $subject Subject component to add to JWT token (additional data string)
-     * @param Member|MemberExtension $member If anonymous_allowed is true, this may be left blank for anonymous logins
+     * @param Member|MemberExtension $member
      * @return Token
      * @throws ValidationException
      */
-    public function generateToken(HTTPRequest $request, string $subject, Member $member = null)
+    public function generateToken(HTTPRequest $request, Member $member): Token
     {
         $config = static::config();
-        // Verify anonymous tokens are allowed
-        if (!$config->get('anonymous_allowed') && empty($member)) {
-            throw new InvalidArgumentException("Member is mandatory if anonymous_allowed is false");
-        }
-        $uniqueID = uniqid(Environment::getEnv('JWT_PREFIX'), true);
+        $uniqueID = uniqid($this->getEnv('JWT_PREFIX', ''), true);
 
         // Create new record
         $record = new JWTRecord();
         $record->UID = $uniqueID;
         $record->UserAgent = $request->getHeader('User-Agent');
-        if ($member) {
-            $member->AuthTokens()->add($record);
-        }
+        $member->AuthTokens()->add($record);
         if (!$record->isInDB()) {
             $record->write();
         }
@@ -227,7 +208,7 @@ class JWTAuthenticator extends MemberAuthenticator
             // Configures a new claim, called "rid"
             ->set('rid', $record->ID)
             // Set the subject, which is the member
-            ->setSubject($subject)
+            ->setSubject($member->getJWTData())
             // Sign the key with the Signer's key
             ->sign($this->getSigner(), $this->getPrivateKey());
 
@@ -241,7 +222,7 @@ class JWTAuthenticator extends MemberAuthenticator
      * @return array Array with JWTRecord and int status (STATUS_*)
      * @throws BadMethodCallException
      */
-    public function validateToken($token, $request)
+    public function validateToken(string $token, HTTPrequest $request): array
     {
         // Ensure token given at all
         if (!$token) {
@@ -251,7 +232,7 @@ class JWTAuthenticator extends MemberAuthenticator
         // Parse token
         $parser = new Parser();
         try {
-            $parsedToken = $parser->parse((string)$token);
+            $parsedToken = $parser->parse($token);
         } catch (Exception $ex) {
             // Un-parsable tokens are invalid
             return [null, TokenStatusEnum::STATUS_INVALID];

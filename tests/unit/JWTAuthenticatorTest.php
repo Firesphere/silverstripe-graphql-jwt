@@ -1,16 +1,18 @@
 <?php
 
-namespace Firesphere\GraphQLJWT\tests;
+namespace Firesphere\GraphQLJWT\Tests;
 
+use App\Users\GraphQL\Types\TokenStatusEnum;
+use Exception;
 use Firesphere\GraphQLJWT\Authentication\JWTAuthenticator;
+use Firesphere\GraphQLJWT\Extensions\MemberExtension;
 use Firesphere\GraphQLJWT\Mutations\CreateTokenMutationCreator;
 use GraphQL\Type\Definition\ResolveInfo;
-use JWTException;
-use SilverStripe\Control\Director;
-use SilverStripe\Control\HTTPRequest;
+use SilverStripe\Control\Controller;
 use SilverStripe\Core\Environment;
-use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
+use SilverStripe\ORM\ValidationException;
+use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Security\Member;
 
 class JWTAuthenticatorTest extends SapphireTest
@@ -21,14 +23,16 @@ class JWTAuthenticatorTest extends SapphireTest
 
     protected $token;
 
+    /**
+     * @throws ValidationException
+     */
     public function setUp()
     {
-        Environment::putEnv('JWT_SIGNER_KEY=test_signer');
+        Environment::setEnv('JWT_SIGNER_KEY', 'test_signer');
 
         parent::setUp();
         $this->member = $this->objFromFixture(Member::class, 'admin');
-        $createToken = Injector::inst()->get(CreateTokenMutationCreator::class);
-
+        $createToken = CreateTokenMutationCreator::singleton();
         $response = $createToken->resolve(
             null,
             ['Email' => 'admin@silverstripe.com', 'Password' => 'error'],
@@ -36,18 +40,16 @@ class JWTAuthenticatorTest extends SapphireTest
             new ResolveInfo([])
         );
 
-        $this->token = $response->Token;
+        $this->token = $response['Token'];
     }
 
-    public function tearDown()
-    {
-        parent::tearDown();
-    }
-
+    /**
+     * @throws Exception
+     */
     public function testValidToken()
     {
-        $authenticator = Injector::inst()->get(JWTAuthenticator::class);
-        $request = new HTTPRequest('POST', Director::absoluteBaseURL() . '/graphql');
+        $authenticator = JWTAuthenticator::singleton();
+        $request = clone Controller::curr()->getRequest();
         $request->addHeader('Authorization', 'Bearer ' . $this->token);
 
         $result = $authenticator->authenticate(['token' => $this->token], $request);
@@ -56,43 +58,54 @@ class JWTAuthenticatorTest extends SapphireTest
         $this->assertEquals($this->member->ID, $result->ID);
     }
 
+    /**
+     * @throws Exception
+     */
     public function testInvalidToken()
     {
-        Environment::putEnv('JWT_SIGNER_KEY=string');
+        Environment::setEnv('JWT_SIGNER_KEY', 'string');
 
-        $authenticator = Injector::inst()->get(JWTAuthenticator::class);
-        $request = new HTTPRequest('POST', Director::absoluteBaseURL() . '/graphql');
+        $authenticator = JWTAuthenticator::singleton();
+        $request = clone Controller::curr()->getRequest();
         $request->addHeader('Authorization', 'Bearer ' . $this->token);
 
         $result = $authenticator->authenticate(['token' => $this->token], $request);
 
         $this->assertNotInstanceOf(Member::class, $result);
-
-        Environment::putEnv('JWT_SIGNER_KEY=test_signer');
     }
 
+    /**
+     * @throws Exception
+     */
     public function testInvalidUniqueID()
     {
-        $authenticator = Injector::inst()->get(JWTAuthenticator::class);
-        $request = new HTTPRequest('POST', Director::absoluteBaseURL() . '/graphql');
+        $authenticator = JWTAuthenticator::singleton();
+        $request = clone Controller::curr()->getRequest();
         $request->addHeader('Authorization', 'Bearer ' . $this->token);
 
         // Invalidate the Unique ID by making it something arbitrarily wrong
+        /** @var Member|MemberExtension $member */
         $member = Member::get()->filter(['Email' => 'admin@silverstripe.com'])->first();
-        $member->JWTUniqueID = 'make_error';
-        $member->write();
+        $member->DestroyAuthTokens();
 
-        $result = $authenticator->authenticate(['token' => $this->token], $request);
-
+        $validationResult = ValidationResult::create();
+        $result = $authenticator->authenticate(['token' => $this->token], $request, $validationResult);
+        $this->assertFalse($validationResult->isValid());
+        $this->assertNotEmpty($validationResult->getMessages());
+        $this->assertEquals('Invalid token provided', $validationResult->getMessages()[TokenStatusEnum::STATUS_INVALID]['message']);
         $this->assertNull($result);
     }
 
+    /**
+     * @throws Exception
+     */
     public function testRSAKey()
     {
-        Environment::putEnv('JWT_SIGNER_KEY=graphql-jwt/tests/keys/private.key');
-        Environment::putEnv('JWT_PUBLIC_KEY=graphql-jwt/tests/keys/public.pub');
+        $keys = realpath(__DIR__ . '/../keys');
+        Environment::setEnv('JWT_SIGNER_KEY', "{$keys}/private.key");
+        Environment::setEnv('JWT_PUBLIC_KEY', "{$keys}/public.pub");
 
-        $createToken = Injector::inst()->get(CreateTokenMutationCreator::class);
+        $createToken = CreateTokenMutationCreator::singleton();
 
         $response = $createToken->resolve(
             null,
@@ -101,10 +114,10 @@ class JWTAuthenticatorTest extends SapphireTest
             new ResolveInfo([])
         );
 
-        $token = $response->Token;
+        $token = $response['Token'];
 
-        $authenticator = Injector::inst()->get(JWTAuthenticator::class);
-        $request = new HTTPRequest('POST', Director::absoluteBaseURL() . '/graphql');
+        $authenticator = JWTAuthenticator::singleton();
+        $request = clone Controller::curr()->getRequest();
         $request->addHeader('Authorization', 'Bearer ' . $token);
 
         $result = $authenticator->authenticate(['token' => $token], $request);
@@ -112,7 +125,7 @@ class JWTAuthenticatorTest extends SapphireTest
         $this->assertInstanceOf(Member::class, $result);
         $this->assertEquals($this->member->ID, $result->ID);
 
-        Environment::putEnv('JWT_SIGNER_KEY=test_signer');
+        Environment::setEnv('JWT_SIGNER_KEY', 'test_signer');
         // After changing the key to a string, the token should be invalid
         $result = $authenticator->authenticate(['token' => $token], $request);
         $this->assertNull($result);

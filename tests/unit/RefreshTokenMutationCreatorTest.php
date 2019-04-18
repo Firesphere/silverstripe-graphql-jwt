@@ -2,18 +2,18 @@
 
 namespace Firesphere\GraphQLJWT\Tests;
 
+use Firesphere\GraphQLJWT\Authentication\AnonymousUserAuthenticator;
 use Firesphere\GraphQLJWT\Authentication\JWTAuthenticator;
 use Firesphere\GraphQLJWT\Mutations\CreateTokenMutationCreator;
 use Firesphere\GraphQLJWT\Mutations\RefreshTokenMutationCreator;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Control\Controller;
-use SilverStripe\Control\Director;
-use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\Session;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Environment;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
+use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\Member;
 
 class RefreshTokenMutationCreatorTest extends SapphireTest
@@ -26,32 +26,40 @@ class RefreshTokenMutationCreatorTest extends SapphireTest
 
     protected $anonymousToken;
 
+    /**
+     * @throws ValidationException
+     */
     public function setUp()
     {
-        Environment::putEnv('JWT_SIGNER_KEY=test_signer');
+        Environment::setENv('JWT_SIGNER_KEY', 'test_signer');
 
         parent::setUp();
         $this->member = $this->objFromFixture(Member::class, 'admin');
-        $createToken = Injector::inst()->get(CreateTokenMutationCreator::class);
+
+        // Enable anonymous authentication for this test
+        $createToken = CreateTokenMutationCreator::singleton();
+        $createToken->setCustomAuthenticators([AnonymousUserAuthenticator::singleton()]);
+
         // Requires to be an expired token
         Config::modify()->set(JWTAuthenticator::class, 'nbf_expiration', -5);
 
+        // Normal token
         $response = $createToken->resolve(
             null,
             ['Email' => 'admin@silverstripe.com', 'Password' => 'error'],
             [],
             new ResolveInfo([])
         );
+        $this->token = $response['Token'];
 
-        $this->token = $response->Token;
+        // Anonymous token
         $response = $createToken->resolve(
             null,
-            ['Email' => 'admin@silverstripe.com', 'Password' => 'notCorrect'],
+            ['Email' => 'anonymous'],
             [],
             new ResolveInfo([])
         );
-
-        $this->anonymousToken = $response->Token;
+        $this->anonymousToken = $response['Token'];
     }
 
     public function tearDown()
@@ -61,11 +69,8 @@ class RefreshTokenMutationCreatorTest extends SapphireTest
 
     private function buildRequest($anonymous = false)
     {
-        $token = $this->token;
-        if ($anonymous) {
-            $token = $this->anonymousToken;
-        }
-        $request = new HTTPRequest('POST', Director::absoluteBaseURL() . '/graphql');
+        $token = $anonymous ? $this->anonymousToken : $this->token;
+        $request = clone Controller::curr()->getRequest();
         $request->addHeader('Authorization', 'Bearer ' . $token);
 
         $request->setSession(new Session(['hello' => 'bye'])); // We need a session
@@ -81,19 +86,18 @@ class RefreshTokenMutationCreatorTest extends SapphireTest
         $queryCreator = Injector::inst()->get(RefreshTokenMutationCreator::class);
         $response = $queryCreator->resolve(null, [], [], new ResolveInfo([]));
 
-        $this->assertNotNull($response->Token);
-        $this->assertInstanceOf(Member::class, $response);
+        $this->assertNotNull($response['Token']);
+        $this->assertInstanceOf(Member::class, $response['Member']);
     }
 
     public function testAnonRefreshToken()
     {
         $this->buildRequest(true);
-        Config::modify()->set(JWTAuthenticator::class, 'anonymous_allowed', true);
 
         $queryCreator = Injector::inst()->get(RefreshTokenMutationCreator::class);
         $response = $queryCreator->resolve(null, [], [], new ResolveInfo([]));
 
-        $this->assertNotNull($response->Token);
-        $this->assertInstanceOf(Member::class, $response);
+        $this->assertNotNull($response['Token']);
+        $this->assertInstanceOf(Member::class, $response['Member']);
     }
 }

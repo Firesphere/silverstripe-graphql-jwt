@@ -1,19 +1,20 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Firesphere\GraphQLJWT\Mutations;
 
 use App\Users\GraphQL\Types\TokenStatusEnum;
 use BadMethodCallException;
 use Exception;
-use Firesphere\GraphQLJWT\Helpers\GeneratesTokenOutput;
 use Firesphere\GraphQLJWT\Helpers\HeaderExtractor;
+use Firesphere\GraphQLJWT\Helpers\MemberTokenGenerator;
 use Firesphere\GraphQLJWT\Helpers\RequiresAuthenticator;
 use Firesphere\GraphQLJWT\Model\JWTRecord;
 use GraphQL\Type\Definition\ResolveInfo;
+use GraphQL\Type\Definition\Type;
 use OutOfBoundsException;
 use Psr\Container\NotFoundExceptionInterface;
 use SilverStripe\Control\Controller;
-use SilverStripe\Control\HTTPResponse_Exception;
+use SilverStripe\Core\Extensible;
 use SilverStripe\GraphQL\MutationCreator;
 use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\ORM\ValidationException;
@@ -22,9 +23,10 @@ class RefreshTokenMutationCreator extends MutationCreator implements OperationRe
 {
     use RequiresAuthenticator;
     use HeaderExtractor;
-    use GeneratesTokenOutput;
+    use MemberTokenGenerator;
+    use Extensible;
 
-    public function attributes()
+    public function attributes(): array
     {
         return [
             'name'        => 'refreshToken',
@@ -32,14 +34,9 @@ class RefreshTokenMutationCreator extends MutationCreator implements OperationRe
         ];
     }
 
-    public function type()
+    public function type(): Type
     {
         return $this->manager->getType('MemberToken');
-    }
-
-    public function args()
-    {
-        return [];
     }
 
     /**
@@ -52,10 +49,9 @@ class RefreshTokenMutationCreator extends MutationCreator implements OperationRe
      * @throws ValidationException
      * @throws BadMethodCallException
      * @throws OutOfBoundsException
-     * @throws HTTPResponse_Exception
      * @throws Exception
      */
-    public function resolve($object, array $args, $context, ResolveInfo $info)
+    public function resolve($object, array $args, $context, ResolveInfo $info): array
     {
         $authenticator = $this->getJWTAuthenticator();
         $request = Controller::curr()->getRequest();
@@ -85,7 +81,7 @@ class RefreshTokenMutationCreator extends MutationCreator implements OperationRe
         }
 
         // Create new token for member
-        $token = $authenticator->generateToken($request, $member);
-        return $this->generateResponse(TokenStatusEnum::STATUS_OK, $member, $token);
+        $newToken = $authenticator->generateToken($request, $member);
+        return $this->generateResponse(TokenStatusEnum::STATUS_OK, $member, $newToken->__toString());
     }
 }

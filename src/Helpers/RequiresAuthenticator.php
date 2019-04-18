@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Firesphere\GraphQLJWT\Helpers;
 
@@ -10,14 +10,14 @@ use Firesphere\GraphQLJWT\Authentication\JWTAuthenticator;
 trait RequiresAuthenticator
 {
     /**
-     * @var JWTAuthenticator
+     * @var JWTAuthenticator|null
      */
     protected $jwtAuthenticator = null;
 
     /**
-     * @return JWTAuthenticator
+     * @return JWTAuthenticator|null
      */
-    protected function getJWTAuthenticator()
+    protected function getJWTAuthenticator(): ?JWTAuthenticator
     {
         return $this->jwtAuthenticator;
     }
@@ -28,7 +28,7 @@ trait RequiresAuthenticator
      * @param JWTAuthenticator $authenticator
      * @return $this
      */
-    public function setJWTAuthenticator(JWTAuthenticator $authenticator)
+    public function setJWTAuthenticator(JWTAuthenticator $authenticator): self
     {
         $this->jwtAuthenticator = $authenticator;
         return $this;

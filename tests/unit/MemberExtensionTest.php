@@ -8,6 +8,7 @@
 
 namespace Firesphere\GraphQLJWT\Tests;
 
+use Firesphere\GraphQLJWT\Extensions\MemberExtension;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Convert;
 use SilverStripe\Dev\SapphireTest;
@@ -17,13 +18,9 @@ class MemberExtensionTest extends SapphireTest
 {
     protected static $fixture_file = '../fixtures/JWTAuthenticatorTest.yml';
 
-    protected function setUp()
-    {
-        return parent::setUp();
-    }
-
     public function testMemberExists()
     {
+        /** @var Member|MemberExtension $member */
         $member = $this->objFromFixture(Member::class, 'admin');
 
         $data = $member->getJWTData();
@@ -34,7 +31,7 @@ class MemberExtensionTest extends SapphireTest
 
     public function testExtraMemberData()
     {
-        /** @var Member $member */
+        /** @var Member|MemberExtension $member */
         $member = $this->objFromFixture(Member::class, 'admin');
         $member->Surname = 'Member';
         Config::modify()->set(Member::class, 'jwt_subject_fields', ['FirstName', 'Surname']);
@@ -48,7 +45,9 @@ class MemberExtensionTest extends SapphireTest
 
     public function testNoMember()
     {
-        $data = Member::create()->getJWTData();
+        /** @var Member|MemberExtension $memberl */
+        $memberl = Member::create();
+        $data = $memberl->getJWTData();
         $result = Convert::json2array($data);
 
         $this->assertEquals(0, $result['id']);

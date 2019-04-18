@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Firesphere\GraphQLJWT\Types;
 
@@ -11,14 +11,14 @@ use SilverStripe\GraphQL\TypeCreator;
  */
 class MemberTokenTypeCreator extends TypeCreator
 {
-    public function attributes()
+    public function attributes(): array
     {
         return [
             'name' => 'MemberToken'
         ];
     }
 
-    public function fields()
+    public function fields(): array
     {
         return [
             'Valid'  => ['type' => Type::boolean()],

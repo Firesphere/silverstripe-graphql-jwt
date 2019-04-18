@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Firesphere\GraphQLJWT\Authentication;
 
@@ -6,8 +6,10 @@ use BadMethodCallException;
 use Exception;
 use Firesphere\GraphQLJWT\Extensions\MemberExtension;
 use Firesphere\GraphQLJWT\Helpers\HeaderExtractor;
+use Firesphere\GraphQLJWT\Helpers\RequiresAuthenticator;
 use OutOfBoundsException;
 use SilverStripe\Control\HTTPRequest;
+use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Security\AuthenticationHandler;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
@@ -20,29 +22,8 @@ use SilverStripe\Security\Security;
 class JWTAuthenticationHandler implements AuthenticationHandler
 {
     use HeaderExtractor;
-
-    /**
-     * @var JWTAuthenticator
-     */
-    protected $authenticator;
-
-    /**
-     * @return JWTAuthenticator
-     */
-    public function getAuthenticator()
-    {
-        return $this->authenticator;
-    }
-
-    /**
-     * @param JWTAuthenticator $authenticator
-     * @return $this
-     */
-    public function setAuthenticator(JWTAuthenticator $authenticator)
-    {
-        $this->authenticator = $authenticator;
-        return $this;
-    }
+    use RequiresAuthenticator;
+    use Injectable;
 
     /**
      * @param HTTPRequest $request
@@ -51,7 +32,7 @@ class JWTAuthenticationHandler implements AuthenticationHandler
      * @throws BadMethodCallException
      * @throws Exception
      */
-    public function authenticateRequest(HTTPRequest $request)
+    public function authenticateRequest(HTTPRequest $request): ?Member
     {
         // Check token
         $token = $this->getAuthorizationHeader($request);
@@ -61,7 +42,7 @@ class JWTAuthenticationHandler implements AuthenticationHandler
 
         // Validate the token. This is critical for security
         $member = $this
-            ->getAuthenticator()
+            ->getJWTAuthenticator()
             ->authenticate(['token' => $token], $request);
 
         if ($member) {
@@ -79,7 +60,7 @@ class JWTAuthenticationHandler implements AuthenticationHandler
      * @param bool             $persistent
      * @param HTTPRequest|null $request
      */
-    public function logIn(Member $member, $persistent = false, HTTPRequest $request = null)
+    public function logIn(Member $member, $persistent = false, HTTPRequest $request = null): void
     {
         Security::setCurrentUser($member);
     }
@@ -87,14 +68,14 @@ class JWTAuthenticationHandler implements AuthenticationHandler
     /**
      * @param HTTPRequest|null $request
      */
-    public function logOut(HTTPRequest $request = null)
+    public function logOut(HTTPRequest $request = null): void
     {
         // A token can actually not be invalidated, but let's flush all valid tokens from the DB.
         // Note that log-out acts as a global logout (all devices)
         /** @var Member|MemberExtension $member */
         $member = Security::getCurrentUser();
         if ($member) {
-            $member->AuthTokens()->removeAll();
+            $member->DestroyAuthTokens();
         }
 
         Security::setCurrentUser(null);

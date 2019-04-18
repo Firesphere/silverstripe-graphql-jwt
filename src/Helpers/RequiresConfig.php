@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Firesphere\GraphQLJWT\Helpers;
 
@@ -15,7 +15,7 @@ trait RequiresConfig
      * @throws LogicException Error if environment variable is required, but not configured
      * @return mixed
      */
-    public static function getEnv($key, $default = null)
+    public static function getEnv(string $key, $default = null)
     {
         $value = Environment::getEnv($key);
         if ($value) {

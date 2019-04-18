@@ -1,18 +1,18 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Firesphere\GraphQLJWT\Helpers;
 
 use App\Users\GraphQL\Types\TokenStatusEnum;
-use Firesphere\GraphQLJWT\Authentication\JWTAuthenticator;
 use InvalidArgumentException;
-use Lcobucci\JWT\Token;
-use SilverStripe\Control\HTTPResponse_Exception;
+use SilverStripe\Core\Extensible;
 use SilverStripe\Security\Member;
 
 /**
  * Generates / Validates a MemberTokenType for graphql responses
+ *
+ * @mixin Extensible
  */
-trait GeneratesTokenOutput
+trait MemberTokenGenerator
 {
     /**
      * Humanise error message based on status code
@@ -21,7 +21,7 @@ trait GeneratesTokenOutput
      * @return string
      * @throws InvalidArgumentException
      */
-    public function getErrorMessage($status)
+    public function getErrorMessage(string $status): string
     {
         switch ($status) {
             case TokenStatusEnum::STATUS_EXPIRED:
@@ -42,41 +42,35 @@ trait GeneratesTokenOutput
     /**
      * Generate MemberToken response
      *
-     * @param string       $status Status code
-     * @param Member       $member
-     * @param string|Token $token
+     * @param string $status Status code
+     * @param Member $member
+     * @param string $token
      * @return array Response in format required by MemberToken
-     * @throws HTTPResponse_Exception
      */
-    protected function generateResponse($status, $member = null, $token = null)
+    protected function generateResponse(string $status, Member $member = null, string $token = null): array
     {
         // Success response
         if ($status == TokenStatusEnum::STATUS_OK) {
-            return [
-                'Valid'  => true,
-                'Member' => $member && $member->exists() ? $member : null,
-                'Token'  => (string)$token,
-                'Status' => $status,
-                'Code'   => 200,
+            $response = [
+                'Valid'   => true,
+                'Member'  => $member && $member->exists() ? $member : null,
+                'Token'   => $token,
+                'Status'  => $status,
+                'Code'    => 200,
+                'Message' => $this->getErrorMessage($status),
+            ];
+        } else {
+            $response = [
+                'Valid'   => false,
+                'Member'  => null,
+                'Token'   => $token,
+                'Status'  => $status,
+                'Code'    => 401,
+                'Message' => $this->getErrorMessage($status),
             ];
         }
 
-        // Note: Use 426 to denote "please renew me" as a response code
-        $code = $status === TokenStatusEnum::STATUS_EXPIRED ? 426 : 401;
-
-        // Check if errors should use http errors
-        if (JWTAuthenticator::config()->get('prefer_http_errors')) {
-            $message = $this->getErrorMessage($status);
-            throw new HTTPResponse_Exception($message, $code);
-        }
-
-        // JSON error instead
-        return [
-            'Valid'  => false,
-            'Member' => null,
-            'Token'  => $token ? (string)$token : null,
-            'Status' => $status,
-            'Code'   => $code,
-        ];
+        $this->extend('updateMemberToken', $response);
+        return $response;
     }
 }

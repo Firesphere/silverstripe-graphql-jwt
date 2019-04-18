@@ -1,15 +1,15 @@
 <?php
 
-namespace Firesphere\GraphQLJWT\tests;
+namespace Firesphere\GraphQLJWT\Tests;
 
+use Exception;
 use Firesphere\GraphQLJWT\Authentication\JWTAuthenticationHandler;
 use Firesphere\GraphQLJWT\Mutations\CreateTokenMutationCreator;
 use GraphQL\Type\Definition\ResolveInfo;
-use SilverStripe\Control\Director;
-use SilverStripe\Control\HTTPRequest;
+use SilverStripe\Control\Controller;
 use SilverStripe\Core\Environment;
-use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
+use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\Member;
 
 class JWTAuthenticationHandlerTest extends SapphireTest
@@ -20,13 +20,16 @@ class JWTAuthenticationHandlerTest extends SapphireTest
 
     protected $token;
 
+    /**
+     * @throws ValidationException
+     */
     public function setUp()
     {
         Environment::putEnv('JWT_SIGNER_KEY=test_signer');
 
         parent::setUp();
         $this->member = $this->objFromFixture(Member::class, 'admin');
-        $createToken = Injector::inst()->get(CreateTokenMutationCreator::class);
+        $createToken = CreateTokenMutationCreator::singleton();
 
         $response = $createToken->resolve(
             null,
@@ -35,22 +38,20 @@ class JWTAuthenticationHandlerTest extends SapphireTest
             new ResolveInfo([])
         );
 
-        $this->token = $response->Token;
+        $this->token = $response['Token'];
     }
 
-    public function tearDown()
-    {
-        parent::tearDown();
-    }
-
+    /**
+     * @throws Exception
+     */
     public function testInvalidAuthenticateRequest()
     {
         Environment::putEnv('JWT_SIGNER_KEY=string');
 
-        $request = new HTTPRequest('POST', Director::absoluteBaseURL() . '/graphql');
+        $request = clone Controller::curr()->getRequest();
         $request->addHeader('Authorization', 'Bearer ' . $this->token);
 
-        $handler = Injector::inst()->get(JWTAuthenticationHandler::class);
+        $handler = JWTAuthenticationHandler::singleton();
 
         $result = $handler->authenticateRequest($request);
         Environment::putEnv('JWT_SIGNER_KEY=test_signer');
@@ -58,16 +59,18 @@ class JWTAuthenticationHandlerTest extends SapphireTest
         $this->assertNull($result);
     }
 
+    /**
+     * @throws Exception
+     */
     public function testAuthenticateRequest()
     {
-        $request = new HTTPRequest('POST', Director::absoluteBaseURL() . '/graphql');
+        $request = clone Controller::curr()->getRequest();
         $request->addHeader('Authorization', 'Bearer ' . $this->token);
 
-        $handler = Injector::inst()->get(JWTAuthenticationHandler::class);
+        $handler = JWTAuthenticationHandler::singleton();
 
         $result = $handler->authenticateRequest($request);
-
         $this->assertInstanceOf(Member::class, $result);
-        $this->assertGreaterThan(0, $result->ID);
+        $this->assertTrue($result->isInDB());
     }
 }

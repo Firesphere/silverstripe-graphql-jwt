@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Users\GraphQL\Types;
 
@@ -66,10 +66,11 @@ class TokenStatusEnum extends EnumType
 
     /**
      * Safely create a single type creator only
+     * @todo Create a TypeCreator for non-object types
      *
      * @return TokenStatusEnum
      */
-    public static function instance()
+    public static function instance(): self
     {
         static $instance = null;
         if (!$instance) {

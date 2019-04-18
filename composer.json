@@ -4,7 +4,7 @@
     "type": "silverstripe-vendormodule",
     "license": "bsd-3-clause",
     "require": {
-        "php": ">=5.6",
+        "php": ">=7.1",
         "silverstripe/framework": "^4.3",
         "silverstripe/graphql": "^3.0",
         "lcobucci/jwt": "^3.2",
@@ -26,12 +26,8 @@
     },
     "autoload": {
         "psr-4": {
-            "Firesphere\\GraphQLJWT\\Authentication\\": "src/Authentication",
-            "Firesphere\\GraphQLJWT\\Extensions\\": "src/Extensions",
-            "Firesphere\\GraphQLJWT\\Helpers\\": "src/Helpers",
-            "Firesphere\\GraphQLJWT\\Mutations\\": "src/Mutations",
-            "Firesphere\\GraphQLJWT\\Queries\\": "src/Queries",
-            "Firesphere\\GraphQLJWT\\Types\\": "src/Types"
+            "Firesphere\\GraphQLJWT\\": "src/",
+            "Firesphere\\GraphQLJWT\\Tests\\": "tests/unit/"
         }
     },
     "prefer-stable": true,

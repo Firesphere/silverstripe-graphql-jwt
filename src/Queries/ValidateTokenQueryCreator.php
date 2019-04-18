@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Firesphere\GraphQLJWT\Queries;
 
@@ -6,15 +6,16 @@ use App\Users\GraphQL\Types\TokenStatusEnum;
 use BadMethodCallException;
 use Exception;
 use Firesphere\GraphQLJWT\Authentication\JWTAuthenticator;
-use Firesphere\GraphQLJWT\Helpers\GeneratesTokenOutput;
 use Firesphere\GraphQLJWT\Helpers\HeaderExtractor;
+use Firesphere\GraphQLJWT\Helpers\MemberTokenGenerator;
 use Firesphere\GraphQLJWT\Helpers\RequiresAuthenticator;
 use Firesphere\GraphQLJWT\Model\JWTRecord;
 use GraphQL\Type\Definition\ResolveInfo;
+use GraphQL\Type\Definition\Type;
 use OutOfBoundsException;
 use Psr\Container\NotFoundExceptionInterface;
 use SilverStripe\Control\Controller;
-use SilverStripe\Control\HTTPResponse_Exception;
+use SilverStripe\Core\Extensible;
 use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\QueryCreator;
 
@@ -22,9 +23,10 @@ class ValidateTokenQueryCreator extends QueryCreator implements OperationResolve
 {
     use RequiresAuthenticator;
     use HeaderExtractor;
-    use GeneratesTokenOutput;
+    use MemberTokenGenerator;
+    use Extensible;
 
-    public function attributes()
+    public function attributes(): array
     {
         return [
             'name'        => 'validateToken',
@@ -32,12 +34,12 @@ class ValidateTokenQueryCreator extends QueryCreator implements OperationResolve
         ];
     }
 
-    public function args()
+    public function args(): array
     {
         return [];
     }
 
-    public function type()
+    public function type(): Type
     {
         return $this->manager->getType('MemberToken');
     }
@@ -51,10 +53,9 @@ class ValidateTokenQueryCreator extends QueryCreator implements OperationResolve
      * @throws NotFoundExceptionInterface
      * @throws OutOfBoundsException
      * @throws BadMethodCallException
-     * @throws HTTPResponse_Exception
      * @throws Exception
      */
-    public function resolve($object, array $args, $context, ResolveInfo $info)
+    public function resolve($object, array $args, $context, ResolveInfo $info): array
     {
         /** @var JWTAuthenticator $authenticator */
         $authenticator = $this->getJWTAuthenticator();

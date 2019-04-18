@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Firesphere\GraphQLJWT\Helpers;
 
@@ -15,7 +15,7 @@ trait HeaderExtractor
      * @param HTTPRequest $request
      * @return string|null
      */
-    protected function getAuthorizationHeader(HTTPRequest $request)
+    protected function getAuthorizationHeader(HTTPRequest $request): ?string
     {
         $authHeader = $request->getHeader('Authorization');
         if ($authHeader && preg_match('/Bearer\s+(?<token>.*)$/i', $authHeader, $matches)) {

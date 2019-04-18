@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Firesphere\GraphQLJWT\Extensions;
 
@@ -14,7 +14,7 @@ use stdClass;
  * Class MemberExtension
  * Add a unique token to the Member for extra validation
  *
- * @property $owner Member|self
+ * @property Member|MemberExtension $owner
  * @method HasManyList|JWTRecord[] AuthTokens()
  */
 class MemberExtension extends DataExtension
@@ -45,7 +45,7 @@ class MemberExtension extends DataExtension
      *
      * @return string
      */
-    public function getJWTData()
+    public function getJWTData(): string
     {
         $data = new stdClass();
         $identifier = Member::config()->get('unique_identifier_field');
@@ -63,5 +63,18 @@ class MemberExtension extends DataExtension
         }
 
         return Convert::raw2json($data);
+    }
+
+    /**
+     * Destroy all JWT tokens
+     *
+     * @return Member
+     */
+    public function DestroyAuthTokens(): Member
+    {
+        foreach ($this->owner->AuthTokens() as $token) {
+            $token->delete();
+        }
+        return $this->owner;
     }
 }
