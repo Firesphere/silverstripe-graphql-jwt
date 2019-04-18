@@ -23,7 +23,6 @@ class MemberTypeCreator extends TypeCreator
             'Surname'   => ['type' => Type::string()],
             'Email'     => ['type' => Type::string()],
             'Token'     => ['type' => Type::string()],
-            'Message'   => ['type' => Type::string()],
         ];
     }
 }

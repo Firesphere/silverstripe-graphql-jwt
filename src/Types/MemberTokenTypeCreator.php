@@ -21,11 +21,12 @@ class MemberTokenTypeCreator extends TypeCreator
     public function fields(): array
     {
         return [
-            'Valid'  => ['type' => Type::boolean()],
-            'Member' => ['type' => $this->manager->getType('Member')],
-            'Token'  => ['type' => Type::string()],
-            'Status' => ['type' => TokenStatusEnum::instance()],
-            'Code'   => ['type' => Type::int()],
+            'Valid'   => ['type' => Type::boolean()],
+            'Member'  => ['type' => $this->manager->getType('Member')],
+            'Token'   => ['type' => Type::string()],
+            'Status'  => ['type' => TokenStatusEnum::instance()],
+            'Code'    => ['type' => Type::int()],
+            'Message' => ['type' => Type::string()],
         ];
     }
 }
