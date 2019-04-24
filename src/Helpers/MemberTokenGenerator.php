@@ -50,7 +50,7 @@ trait MemberTokenGenerator
     protected function generateResponse(string $status, Member $member = null, string $token = null): array
     {
         // Success response
-        if ($status == TokenStatusEnum::STATUS_OK) {
+        if ($status === TokenStatusEnum::STATUS_OK) {
             $response = [
                 'Valid'   => true,
                 'Member'  => $member && $member->exists() ? $member : null,

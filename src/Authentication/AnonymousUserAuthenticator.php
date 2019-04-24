@@ -7,7 +7,6 @@ use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\ORM\ValidationException;
 use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Security\Authenticator;
 use SilverStripe\Security\Member;
@@ -49,7 +48,6 @@ class AnonymousUserAuthenticator extends MemberAuthenticator
      * @param ValidationResult $result
      * @param Member $member This third parameter is used in the CMSAuthenticator(s)
      * @return Member Found member, regardless of successful login
-     * @throws ValidationException
      */
     protected function authenticateMember($data, ValidationResult &$result = null, Member $member = null): Member
     {

@@ -75,7 +75,7 @@ class JWTAuthenticationHandler implements AuthenticationHandler
         /** @var Member|MemberExtension $member */
         $member = Security::getCurrentUser();
         if ($member) {
-            $member->DestroyAuthTokens();
+            $member->destroyAuthTokens();
         }
 
         Security::setCurrentUser(null);

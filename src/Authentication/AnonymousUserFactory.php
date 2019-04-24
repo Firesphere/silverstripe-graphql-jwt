@@ -44,7 +44,7 @@ class AnonymousUserFactory implements Factory
 
         // Create new member
         $member = Member::create();
-        $member->{$identifierField} = $username;
+        $member->__set($identifierField, $username);
         $member->update($fields);
         $member->write();
         return $member;

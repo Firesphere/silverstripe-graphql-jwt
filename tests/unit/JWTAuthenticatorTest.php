@@ -86,7 +86,7 @@ class JWTAuthenticatorTest extends SapphireTest
         // Invalidate the Unique ID by making it something arbitrarily wrong
         /** @var Member|MemberExtension $member */
         $member = Member::get()->filter(['Email' => 'admin@silverstripe.com'])->first();
-        $member->DestroyAuthTokens();
+        $member->destroyAuthTokens();
 
         $validationResult = ValidationResult::create();
         $result = $authenticator->authenticate(['token' => $this->token], $request, $validationResult);

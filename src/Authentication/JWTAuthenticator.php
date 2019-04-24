@@ -7,7 +7,6 @@ use BadMethodCallException;
 use Exception;
 use Firesphere\GraphQLJWT\Extensions\MemberExtension;
 use Firesphere\GraphQLJWT\Helpers\MemberTokenGenerator;
-use Firesphere\GraphQLJWT\Helpers\PathResolver;
 use Firesphere\GraphQLJWT\Helpers\RequiresConfig;
 use Firesphere\GraphQLJWT\Model\JWTRecord;
 use Lcobucci\JWT\Builder;
@@ -23,7 +22,6 @@ use OutOfBoundsException;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Core\Config\Configurable;
-use SilverStripe\Core\Environment;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\ORM\ValidationException;
@@ -38,6 +36,27 @@ class JWTAuthenticator extends MemberAuthenticator
     use Configurable;
     use RequiresConfig;
     use MemberTokenGenerator;
+
+    const JWT_SIGNER_KEY = 'JWT_SIGNER_KEY';
+
+    const JWT_KEY_PASSWORD = 'JWT_KEY_PASSWORD';
+
+    const JWT_PUBLIC_KEY = 'JWT_PUBLIC_KEY';
+
+    /**
+     * Key is RSA public/private pair
+     */
+    const RSA = 'RSA';
+
+    /**
+     * Key is RSA public/private pair, with password enabled
+     */
+    const RSA_PASSWORD = 'RSA_PASSWORD';
+
+    /**
+     * Key is HMAC string
+     */
+    const HMAC = 'HMAC';
 
     /**
      * Set to true to allow anonymous JWT tokens (no member record / email / password)
@@ -70,56 +89,90 @@ class JWTAuthenticator extends MemberAuthenticator
     private static $nbf_refresh_expiration = 604800;
 
     /**
+     * Keys are one of:
+     *   - public / private RSA pair files
+     *   - public / private RSA pair files, password protected private key
+     *   - private HMAC string
+     *
+     * @return string
+     */
+    protected function getKeyType(): string
+    {
+        $signerKey = $this->getEnv(self::JWT_SIGNER_KEY);
+        $path = $this->resolvePath($signerKey);
+        if (!$path) {
+            return self::HMAC;
+        }
+        if ($this->getEnv(self::JWT_KEY_PASSWORD, null)) {
+            return self::RSA_PASSWORD;
+        }
+        return self::RSA;
+    }
+
+    /**
      * @return Signer
      */
     protected function getSigner(): Signer
     {
-        $signerKey = $this->getEnv('JWT_SIGNER_KEY');
-        if (PathResolver::resolve($signerKey)) {
-            return new Rsa\Sha256();
-        } else {
-            return new Hmac\Sha256();
+        switch ($this->getKeyType()) {
+            case self::HMAC:
+                return new Hmac\Sha256();
+            case self::RSA:
+            case self::RSA_PASSWORD:
+            default:
+                return new Rsa\Sha256();
         }
     }
 
     /**
-     * Get private key
+     * Get private key used to generate JWT tokens
      *
      * @return Key
      */
     protected function getPrivateKey(): Key
     {
-        $signerKey = $this->getEnv('JWT_SIGNER_KEY');
-        $signerPath = PathResolver::resolve($signerKey);
-        if ($signerPath) {
-            $password = $this->getEnv('JWT_KEY_PASSWORD', null);
-            return new Key('file://' . $signerPath, $password);
-        }
-        return new Key($signerKey);
+        // Note: Only private key has password enabled
+        $password = $this->getEnv(self::JWT_KEY_PASSWORD, null);
+        return $this->makeKey(self::JWT_SIGNER_KEY, $password);
     }
 
     /**
-     * Get public key
+     * Get public key used to validate JWT tokens
      *
      * @return Key
      * @throws LogicException
      */
-    private function getPublicKey(): Key
+    protected function getPublicKey(): Key
     {
-        $signerKey = Environment::getEnv('JWT_SIGNER_KEY');
-        $signerPath = PathResolver::resolve($signerKey);
-        // If it's a private key, we also need a public key for validation!
-        if (empty($signerPath)) {
-            return new Key($signerKey);
+        switch ($this->getKeyType()) {
+            case self::HMAC:
+                // If signer key is a HMAC string instead of a path, public key == private key
+                return $this->getPrivateKey();
+            default:
+                // If signer key is a path to RSA token, then we require a separate public key path
+                return $this->makeKey(self::JWT_PUBLIC_KEY);
+        }
+    }
+
+    /**
+     * Construct a new key from the named config variable
+     *
+     * @param string $name Key name
+     * @param string|null $password Optional password
+     * @return Key
+     */
+    private function makeKey(string $name, string $password = null): Key
+    {
+        $key = $this->getEnv($name);
+        $path = $this->resolvePath($key);
+
+        // String key
+        if (empty($path)) {
+            return new Key($path);
         }
 
-        // Ensure public key exists
-        $publicKey = Environment::getEnv('JWT_PUBLIC_KEY');
-        $publicPath = PathResolver::resolve($publicKey);
-        if (empty($publicPath)) {
-            throw new LogicException('JWT_PUBLIC_KEY path does not exist');
-        }
-        return new Key('file://' . $publicPath);
+        // Build key from path
+        return new Key('file://' . $path, $password);
     }
 
     /**
@@ -281,5 +334,21 @@ class JWTAuthenticator extends MemberAuthenticator
 
         // If expired and cannot be renewed, it's dead
         return [$record, TokenStatusEnum::STATUS_DEAD];
+    }
+
+    /**
+     * Return an absolute path from a relative one
+     * If the path doesn't exist, returns null
+     *
+     * @param string $path
+     * @param string $base
+     * @return string|null
+     */
+    protected function resolvePath(string $path, string $base = BASE_PATH): ?string
+    {
+        if (strstr($path, '/') !== 0) {
+            $path = $base . '/' . $path;
+        }
+        return realpath($path) ?: null;
     }
 }

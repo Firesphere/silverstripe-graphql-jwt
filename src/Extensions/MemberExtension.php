@@ -3,7 +3,6 @@
 namespace Firesphere\GraphQLJWT\Extensions;
 
 use Firesphere\GraphQLJWT\Model\JWTRecord;
-use SilverStripe\Core\Convert;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\ORM\DataExtension;
 use SilverStripe\ORM\HasManyList;
@@ -62,7 +61,7 @@ class MemberExtension extends DataExtension
             }
         }
 
-        return Convert::raw2json($data);
+        return json_encode($data);
     }
 
     /**
@@ -70,7 +69,7 @@ class MemberExtension extends DataExtension
      *
      * @return Member
      */
-    public function DestroyAuthTokens(): Member
+    public function destroyAuthTokens(): Member
     {
         foreach ($this->owner->AuthTokens() as $token) {
             $token->delete();
