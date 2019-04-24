@@ -92,7 +92,10 @@ class JWTAuthenticatorTest extends SapphireTest
         $result = $authenticator->authenticate(['token' => $this->token], $request, $validationResult);
         $this->assertFalse($validationResult->isValid());
         $this->assertNotEmpty($validationResult->getMessages());
-        $this->assertEquals('Invalid token provided', $validationResult->getMessages()[TokenStatusEnum::STATUS_INVALID]['message']);
+        $this->assertEquals(
+            'Invalid token provided',
+            $validationResult->getMessages()[TokenStatusEnum::STATUS_INVALID]['message']
+        );
         $this->assertNull($result);
     }
 

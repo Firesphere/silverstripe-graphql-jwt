@@ -7,7 +7,6 @@ use BadMethodCallException;
 use Exception;
 use Firesphere\GraphQLJWT\Extensions\MemberExtension;
 use Firesphere\GraphQLJWT\Helpers\MemberTokenGenerator;
-use Firesphere\GraphQLJWT\Helpers\RequiresConfig;
 use Firesphere\GraphQLJWT\Model\JWTRecord;
 use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\Parser;
@@ -22,6 +21,7 @@ use OutOfBoundsException;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Core\Config\Configurable;
+use SilverStripe\Core\Environment;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\ORM\ValidationException;
@@ -34,7 +34,6 @@ class JWTAuthenticator extends MemberAuthenticator
 {
     use Injectable;
     use Configurable;
-    use RequiresConfig;
     use MemberTokenGenerator;
 
     const JWT_SIGNER_KEY = 'JWT_SIGNER_KEY';
@@ -350,5 +349,26 @@ class JWTAuthenticator extends MemberAuthenticator
             $path = $base . '/' . $path;
         }
         return realpath($path) ?: null;
+    }
+
+
+    /**
+     * Get an environment value. If $default is not set and the environment isn't set either this will error.
+     *
+     * @param string $key
+     * @param string|null $default
+     * @throws LogicException Error if environment variable is required, but not configured
+     * @return string|null
+     */
+    protected function getEnv(string $key, $default = null): ?string
+    {
+        $value = Environment::getEnv($key);
+        if ($value) {
+            return $value;
+        }
+        if (func_num_args() === 1) {
+            throw new LogicException("Required environment variable {$key} not set");
+        }
+        return $default;
     }
 }

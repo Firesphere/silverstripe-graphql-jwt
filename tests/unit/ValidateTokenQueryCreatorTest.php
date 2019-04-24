@@ -99,6 +99,9 @@ class ValidateTokenQueryCreatorTest extends SapphireTest
         $this->assertFalse($response['Valid']);
         $this->assertEquals(TokenStatusEnum::STATUS_EXPIRED, $response['Status']);
         $this->assertEquals(401, $response['Code']);
-        $this->assertEquals('Token is expired, please renew your token with a refreshToken query', $response['Message']);
+        $this->assertEquals(
+            'Token is expired, please renew your token with a refreshToken query',
+            $response['Message']
+        );
     }
 }

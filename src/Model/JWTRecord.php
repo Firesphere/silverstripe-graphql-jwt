@@ -3,6 +3,7 @@
 namespace Firesphere\GraphQLJWT\Model;
 
 use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\FieldType\DBIndexable;
 use SilverStripe\Security\Member;
 
 /**
@@ -12,7 +13,7 @@ use SilverStripe\Security\Member;
  */
 class JWTRecord extends DataObject
 {
-    private static $table_name = 'Firesphere_JWTRecord';
+    private static $table_name = 'JWTRecord';
 
     private static $db = [
         'UID'       => 'Varchar(255)',
@@ -21,5 +22,12 @@ class JWTRecord extends DataObject
 
     private static $has_one = [
         'Member' => Member::class,
+    ];
+
+    private static $indexes = [
+        'UID' => [
+            'type'    => DBIndexable::TYPE_UNIQUE,
+            'columns' => ['UID'],
+        ],
     ];
 }

@@ -110,7 +110,7 @@ class CreateTokenMutationCreator extends MutationCreator implements OperationRes
     {
         // Login with authenticators
         foreach ($this->getLoginAuthenticators() as $authenticator) {
-            $result = new ValidationResult();
+            $result = ValidationResult::create();
             $member = $authenticator->authenticate($args, $request, $result);
             if ($member && $result->isValid()) {
                 return $member;
