@@ -1,0 +1,7 @@
+---
+Name: firesphere-jwt-anonymous
+---
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\Security\Member.anonymous:
+    class: SilverStripe\Security\Member
+    factory: Firesphere\GraphQLJWT\Authentication\AnonymousUserFactory

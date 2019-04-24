@@ -6,6 +6,7 @@ use BadMethodCallException;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Security\Authenticator;
@@ -23,15 +24,6 @@ class AnonymousUserAuthenticator extends MemberAuthenticator
      * @var string
      */
     private static $anonymous_username = 'anonymous';
-
-    /**
-     * Default field values to assign to anonymous user
-     *
-     * @var array
-     */
-    private static $anonymous_fields = [
-        'FirstName' => 'Anonymous',
-    ];
 
     public function supportedServices(): int
     {
@@ -62,7 +54,8 @@ class AnonymousUserAuthenticator extends MemberAuthenticator
     protected function authenticateMember($data, ValidationResult &$result = null, Member $member = null): Member
     {
         // Get user, or create if not exists
-        $member = $this->getOrCreateAnonymousMember();
+        $username = static::config()->get('anonymous_username');
+        $member = Injector::inst()->get(Member::class . '.anonymous', true, ['username' => $username]);
 
         // Validate this member is still allowed to login
         $result = $result ?: ValidationResult::create();
@@ -81,35 +74,5 @@ class AnonymousUserAuthenticator extends MemberAuthenticator
     public function checkPassword(Member $member, $password, ValidationResult &$result = null)
     {
         throw new BadMethodCallException("checkPassword not supported for anonymous users");
-    }
-
-    /**
-     * Build a new datarecord to contain the anonymous user
-     *
-     * @return Member
-     * @throws ValidationException
-     */
-    protected function getOrCreateAnonymousMember()
-    {
-        // Fun facts about anonymous members
-        $identifierField = Member::config()->get('unique_identifier_field');
-        $username = static::config()->get('anonymous_username');
-        $fields = static::config()->get('anonymous_fields');
-
-        // Find existing member
-        /** @var Member $member */
-        $member = Member::get()->find($identifierField, $username);
-        $this->extend('updateExistingAnonymousMember', $member);
-        if ($member) {
-            return $member;
-        }
-
-        // Create new member
-        $member = Member::create();
-        $member->{$identifierField} = $username;
-        $member->update($fields);
-        $this->extend('updateCreatedAnonymousMember', $member);
-        $member->write();
-        return $member;
     }
 }
