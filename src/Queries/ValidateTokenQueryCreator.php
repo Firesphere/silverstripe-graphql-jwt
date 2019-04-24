@@ -45,9 +45,9 @@ class ValidateTokenQueryCreator extends QueryCreator implements OperationResolve
     }
 
     /**
-     * @param mixed       $object
-     * @param array       $args
-     * @param mixed       $context
+     * @param mixed $object
+     * @param array $args
+     * @param mixed $context
      * @param ResolveInfo $info
      * @return array
      * @throws NotFoundExceptionInterface

@@ -133,8 +133,8 @@ class JWTAuthenticator extends MemberAuthenticator
     }
 
     /**
-     * @param array                 $data
-     * @param HTTPRequest           $request
+     * @param array $data
+     * @param HTTPRequest $request
      * @param ValidationResult|null $result
      * @return Member|null
      * @throws OutOfBoundsException
@@ -168,7 +168,7 @@ class JWTAuthenticator extends MemberAuthenticator
     /**
      * Generate a new JWT token for a given request, and optional (if anonymous_allowed) user
      *
-     * @param HTTPRequest            $request
+     * @param HTTPRequest $request
      * @param Member|MemberExtension $member
      * @return Token
      * @throws ValidationException
@@ -217,7 +217,7 @@ class JWTAuthenticator extends MemberAuthenticator
     }
 
     /**
-     * @param string      $token
+     * @param string $token
      * @param HTTPRequest $request
      * @return array Array with JWTRecord and int status (STATUS_*)
      * @throws BadMethodCallException

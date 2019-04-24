@@ -74,9 +74,9 @@ class CreateTokenMutationCreator extends MutationCreator implements OperationRes
     }
 
     /**
-     * @param mixed       $object
-     * @param array       $args
-     * @param mixed       $context
+     * @param mixed $object
+     * @param array $args
+     * @param mixed $context
      * @param ResolveInfo $info
      * @return array
      * @throws NotFoundExceptionInterface
@@ -102,7 +102,7 @@ class CreateTokenMutationCreator extends MutationCreator implements OperationRes
     /**
      * Get an authenticated member from the given request
      *
-     * @param array       $args
+     * @param array $args
      * @param HTTPRequest $request
      * @return Member|MemberExtension
      */

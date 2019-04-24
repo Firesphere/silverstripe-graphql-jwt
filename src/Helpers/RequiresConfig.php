@@ -11,7 +11,7 @@ trait RequiresConfig
      * Get an environment value. If $default is not set and the environment isn't set either this will error.
      *
      * @param string $key
-     * @param mixed  $default
+     * @param mixed $default
      * @throws LogicException Error if environment variable is required, but not configured
      * @return mixed
      */
