@@ -50,25 +50,15 @@ trait MemberTokenGenerator
     protected function generateResponse(string $status, Member $member = null, string $token = null): array
     {
         // Success response
-        if ($status === TokenStatusEnum::STATUS_OK) {
-            $response = [
-                'Valid'   => true,
-                'Member'  => $member && $member->exists() ? $member : null,
-                'Token'   => $token,
-                'Status'  => $status,
-                'Code'    => 200,
-                'Message' => $this->getErrorMessage($status),
-            ];
-        } else {
-            $response = [
-                'Valid'   => false,
-                'Member'  => null,
-                'Token'   => $token,
-                'Status'  => $status,
-                'Code'    => 401,
-                'Message' => $this->getErrorMessage($status),
-            ];
-        }
+        $valid = $status === TokenStatusEnum::STATUS_OK;
+        $response = [
+            'Valid'   => $valid,
+            'Member'  => $valid && $member && $member->exists() ? $member : null,
+            'Token'   => $token,
+            'Status'  => $status,
+            'Code'    => $valid ? 200 : 401,
+            'Message' => $this->getErrorMessage($status),
+        ];
 
         $this->extend('updateMemberToken', $response);
         return $response;

@@ -276,46 +276,20 @@ class JWTAuthenticator extends MemberAuthenticator
      */
     public function validateToken(string $token, HTTPrequest $request): array
     {
-        // Ensure token given at all
-        if (!$token) {
-            return [null, TokenStatusEnum::STATUS_INVALID];
-        }
-
         // Parse token
-        $parser = new Parser();
-        try {
-            $parsedToken = $parser->parse($token);
-        } catch (Exception $ex) {
-            // Un-parsable tokens are invalid
+        $parsedToken = $this->parseToken($token);
+        if ($parsedToken) {
             return [null, TokenStatusEnum::STATUS_INVALID];
         }
 
-        // Validate token against Id and user-agent
-        $userAgent = $request->getHeader('User-Agent');
-        /** @var JWTRecord $record */
-        $record = JWTRecord::get()
-            ->filter(['UserAgent' => $userAgent])
-            ->byID($parsedToken->getClaim('rid'));
+        // Find local record for this token
+        $record = $this->findTokenRecord($parsedToken, $request);
         if (!$record) {
             return [null, TokenStatusEnum::STATUS_INVALID];
         }
 
-        // Get validator for this token
-        $now = DBDatetime::now()->getTimestamp();
-        $validator = new ValidationData();
-        $validator->setIssuer($request->getHeader('Origin'));
-        $validator->setAudience(Director::absoluteBaseURL());
-        $validator->setId($record->UID);
-        $validator->setCurrentTime($now);
-        $verified = $parsedToken->verify($this->getSigner(), $this->getPublicKey());
-        $valid = $parsedToken->validate($validator);
-
-        // If unverified, break
-        if (!$verified) {
-            return [$record, TokenStatusEnum::STATUS_INVALID];
-        }
-
         // Verified and valid = ok!
+        $valid = $this->validateParsedToken($parsedToken, $request, $record);
         if ($valid) {
             return [$record, TokenStatusEnum::STATUS_OK];
         }
@@ -326,13 +300,89 @@ class JWTAuthenticator extends MemberAuthenticator
         }
 
         // If expired, check if it can be renewed
-        $renewBefore = $parsedToken->getClaim('rexp');
-        if ($renewBefore > $now) {
+        $canReniew = $this->canTokenBeRenewed($parsedToken);
+        if ($canReniew) {
             return [$record, TokenStatusEnum::STATUS_EXPIRED];
         }
 
         // If expired and cannot be renewed, it's dead
         return [$record, TokenStatusEnum::STATUS_DEAD];
+    }
+
+    /**
+     * Parse a string into a token
+     *
+     * @param string $token
+     * @return Token|null
+     */
+    protected function parseToken(string $token): ?Token
+    {
+        // Ensure token given at all
+        if (!$token) {
+            return null;
+        }
+
+        try {
+            // Verify parsed token matches signer
+            $parser = new Parser();
+            $parsedToken = $parser->parse($token);
+        } catch (Exception $ex) {
+            // Un-parsable tokens are invalid
+            return null;
+        }
+
+        // Verify this token with configured keys
+        $verified = $parsedToken->verify($this->getSigner(), $this->getPublicKey());
+        return $verified ? $parsedToken : null;
+    }
+
+    /**
+     * Given a parsed Token, find the matching JWTRecord dataobject
+     *
+     * @param Token $parsedToken
+     * @param HTTPRequest $request
+     * @return JWTRecord|null
+     */
+    protected function findTokenRecord(Token $parsedToken, HTTPrequest $request): ?JWTRecord
+    {
+        $userAgent = $request->getHeader('User-Agent');
+        /** @var JWTRecord $record */
+        $record = JWTRecord::get()
+            ->filter(['UserAgent' => $userAgent])
+            ->byID($parsedToken->getClaim('rid'));
+        return $record;
+    }
+
+    /**
+     * Determine if the given token is current, given the context of the current request
+     *
+     * @param Token $parsedToken
+     * @param HTTPRequest $request
+     * @param JWTRecord $record
+     * @return bool
+     */
+    protected function validateParsedToken(Token $parsedToken, HTTPrequest $request, JWTRecord $record): bool
+    {
+        $now = DBDatetime::now()->getTimestamp();
+        $validator = new ValidationData();
+        $validator->setIssuer($request->getHeader('Origin'));
+        $validator->setAudience(Director::absoluteBaseURL());
+        $validator->setId($record->UID);
+        $validator->setCurrentTime($now);
+        return $parsedToken->validate($validator);
+    }
+
+    /**
+     * Check if the given token can be renewed
+     *
+     * @param Token $parsedToken
+     * @return bool
+     */
+    protected function canTokenBeRenewed(Token $parsedToken): bool
+    {
+        $renewBefore = $parsedToken->getClaim('rexp');
+        $now = DBDatetime::now()->getTimestamp();
+        return $renewBefore > $now;
     }
 
     /**
