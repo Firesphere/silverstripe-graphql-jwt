@@ -283,7 +283,8 @@ class JWTAuthenticator extends MemberAuthenticator
         }
 
         // Find local record for this token
-        $record = $this->findTokenRecord($parsedToken, $request);
+        /** @var JWTRecord $record */
+        $record = JWTRecord::get()->byID($parsedToken->getClaim('rid'));
         if (!$record) {
             return [null, TokenStatusEnum::STATUS_INVALID];
         }
@@ -334,23 +335,6 @@ class JWTAuthenticator extends MemberAuthenticator
         // Verify this token with configured keys
         $verified = $parsedToken->verify($this->getSigner(), $this->getPublicKey());
         return $verified ? $parsedToken : null;
-    }
-
-    /**
-     * Given a parsed Token, find the matching JWTRecord dataobject
-     *
-     * @param Token $parsedToken
-     * @param HTTPRequest $request
-     * @return JWTRecord|null
-     */
-    protected function findTokenRecord(Token $parsedToken, HTTPrequest $request): ?JWTRecord
-    {
-        $userAgent = $request->getHeader('User-Agent');
-        /** @var JWTRecord $record */
-        $record = JWTRecord::get()
-            ->filter(['UserAgent' => $userAgent])
-            ->byID($parsedToken->getClaim('rid'));
-        return $record;
     }
 
     /**
