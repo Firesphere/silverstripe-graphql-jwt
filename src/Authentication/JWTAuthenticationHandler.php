@@ -1,10 +1,15 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Firesphere\GraphQLJWT\Authentication;
 
+use BadMethodCallException;
+use Exception;
+use Firesphere\GraphQLJWT\Extensions\MemberExtension;
 use Firesphere\GraphQLJWT\Helpers\HeaderExtractor;
+use Firesphere\GraphQLJWT\Helpers\RequiresAuthenticator;
+use OutOfBoundsException;
 use SilverStripe\Control\HTTPRequest;
-use SilverStripe\ORM\ValidationException;
+use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Security\AuthenticationHandler;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
@@ -12,49 +17,33 @@ use SilverStripe\Security\Security;
 /**
  * Class JWTAuthenticationHandler
  *
- *
  * @package Firesphere\GraphQLJWT
  */
 class JWTAuthenticationHandler implements AuthenticationHandler
 {
-
-    /**
-     * @var JWTAuthenticator
-     */
-    protected $authenticator;
-
-    /**
-     * @return mixed
-     */
-    public function getAuthenticator()
-    {
-        return $this->authenticator;
-    }
-
-    /**
-     * @param mixed $authenticator
-     */
-    public function setAuthenticator($authenticator)
-    {
-        $this->authenticator = $authenticator;
-    }
+    use HeaderExtractor;
+    use RequiresAuthenticator;
+    use Injectable;
 
     /**
      * @param HTTPRequest $request
      * @return null|Member
-     * @throws \OutOfBoundsException
-     * @throws \BadMethodCallException
+     * @throws OutOfBoundsException
+     * @throws BadMethodCallException
+     * @throws Exception
      */
-    public function authenticateRequest(HTTPRequest $request)
+    public function authenticateRequest(HTTPRequest $request): ?Member
     {
-        $matches = HeaderExtractor::getAuthorizationHeader($request);
-        // Get the default user currently logged in via a different way, could be BasicAuth/normal login
-        $member = Security::getCurrentUser();
-
-        if (!empty($matches[1])) {
-            // Validate the token. This is critical for security
-            $member = $this->authenticator->authenticate(['token' => $matches[1]], $request);
+        // Check token
+        $token = $this->getAuthorizationHeader($request);
+        if (!$token) {
+            return null;
         }
+
+        // Validate the token. This is critical for security
+        $member = $this
+            ->getJWTAuthenticator()
+            ->authenticate(['token' => $token], $request);
 
         if ($member) {
             $this->logIn($member);
@@ -71,28 +60,24 @@ class JWTAuthenticationHandler implements AuthenticationHandler
      * @param bool $persistent
      * @param HTTPRequest|null $request
      */
-    public function logIn(Member $member, $persistent = false, HTTPRequest $request = null)
+    public function logIn(Member $member, $persistent = false, HTTPRequest $request = null): void
     {
         Security::setCurrentUser($member);
     }
 
     /**
      * @param HTTPRequest|null $request
-     * @throws ValidationException
      */
-    public function logOut(HTTPRequest $request = null)
+    public function logOut(HTTPRequest $request = null): void
     {
-        // A token can actually not be invalidated, but let's invalidate it's unique ID
-        // A member actually can be null though!
-        if ($request !== null) { // If we don't have a request, we're most probably in test mode
-            $member = Security::getCurrentUser();
-            if ($member) {
-                // Set the unique ID to 0, as it can't be nullified due to indexes.
-                $member->JWTUniqueID = 0;
-                $member->write();
-            }
+        // A token can actually not be invalidated, but let's flush all valid tokens from the DB.
+        // Note that log-out acts as a global logout (all devices)
+        /** @var Member|MemberExtension $member */
+        $member = Security::getCurrentUser();
+        if ($member) {
+            $member->destroyAuthTokens();
         }
-        // Empty the current user and pray to god it's not valid anywhere else anymore :)
-        Security::setCurrentUser();
+
+        Security::setCurrentUser(null);
     }
 }

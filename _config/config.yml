@@ -1,32 +1,20 @@
 ---
-after: graphqlconfig
+Name: firesphere-jwt-injections
 ---
 SilverStripe\Core\Injector\Injector:
   SilverStripe\Security\AuthenticationHandler:
     properties:
       Handlers:
-         jwt: %$Firesphere\GraphQLJWT\Authentication\JWTAuthenticationHandler
+        jwt: %$Firesphere\GraphQLJWT\Authentication\JWTAuthenticationHandler
   Firesphere\GraphQLJWT\Authentication\JWTAuthenticationHandler:
     properties:
-      Authenticator: %$Firesphere\GraphQLJWT\Authentication\JWTAuthenticator
----
-after: graphqlroutes
----
-SilverStripe\Control\Director:
-  rules:
-    graphql:
-      Controller: 'SilverStripe\GraphQL\Controller'
-      # @internal - Experimental config
-      # @todo - move this to a per-schema configuration, and simply register the named schema for this endpoint
-      # https://github.com/silverstripe/silverstripe-graphql/issues/52
-      Stage: Live
-      Permissions: false
----
-name: graphqljwt
-after:
-  - '#coresecurity'
----
-Firesphere\GraphQLJWT\Authentication\JWTAuthenticator:
-  nbf_time: 0
-  nbf_expiration: 3600
-  anonymous_allowed: false
+      JWTAuthenticator: %$Firesphere\GraphQLJWT\Authentication\JWTAuthenticator
+  Firesphere\GraphQLJWT\Mutations\CreateTokenMutationCreator:
+    properties:
+      JWTAuthenticator: %$Firesphere\GraphQLJWT\Authentication\JWTAuthenticator
+  Firesphere\GraphQLJWT\Mutations\RefreshTokenMutationCreator:
+    properties:
+      JWTAuthenticator: %$Firesphere\GraphQLJWT\Authentication\JWTAuthenticator
+  Firesphere\GraphQLJWT\Queries\ValidateTokenQueryCreator:
+    properties:
+      JWTAuthenticator: %$Firesphere\GraphQLJWT\Authentication\JWTAuthenticator

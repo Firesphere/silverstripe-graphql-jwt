@@ -1,21 +1,32 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Firesphere\GraphQLJWT\Mutations;
 
-use Firesphere\GraphQLJWT\Authentication\JWTAuthenticator;
+use App\Users\GraphQL\Types\TokenStatusEnum;
+use BadMethodCallException;
+use Exception;
 use Firesphere\GraphQLJWT\Helpers\HeaderExtractor;
+use Firesphere\GraphQLJWT\Helpers\MemberTokenGenerator;
+use Firesphere\GraphQLJWT\Helpers\RequiresAuthenticator;
+use Firesphere\GraphQLJWT\Model\JWTRecord;
 use GraphQL\Type\Definition\ResolveInfo;
-use Lcobucci\JWT\Parser;
+use GraphQL\Type\Definition\Type;
+use OutOfBoundsException;
+use Psr\Container\NotFoundExceptionInterface;
 use SilverStripe\Control\Controller;
-use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Core\Extensible;
 use SilverStripe\GraphQL\MutationCreator;
 use SilverStripe\GraphQL\OperationResolver;
-use SilverStripe\ORM\ValidationResult;
-use SilverStripe\Security\Member;
+use SilverStripe\ORM\ValidationException;
 
 class RefreshTokenMutationCreator extends MutationCreator implements OperationResolver
 {
-    public function attributes()
+    use RequiresAuthenticator;
+    use HeaderExtractor;
+    use MemberTokenGenerator;
+    use Extensible;
+
+    public function attributes(): array
     {
         return [
             'name'        => 'refreshToken',
@@ -23,14 +34,9 @@ class RefreshTokenMutationCreator extends MutationCreator implements OperationRe
         ];
     }
 
-    public function type()
+    public function type(): Type
     {
         return $this->manager->getType('MemberToken');
-    }
-
-    public function args()
-    {
-        return [];
     }
 
     /**
@@ -38,55 +44,44 @@ class RefreshTokenMutationCreator extends MutationCreator implements OperationRe
      * @param array $args
      * @param mixed $context
      * @param ResolveInfo $info
-     * @return Member|null
-     * @throws \Psr\Container\NotFoundExceptionInterface
-     * @throws \SilverStripe\ORM\ValidationException
-     * @throws \BadMethodCallException
-     * @throws \OutOfBoundsException
+     * @return array
+     * @throws NotFoundExceptionInterface
+     * @throws ValidationException
+     * @throws BadMethodCallException
+     * @throws OutOfBoundsException
+     * @throws Exception
      */
-    public function resolve($object, array $args, $context, ResolveInfo $info)
+    public function resolve($object, array $args, $context, ResolveInfo $info): array
     {
+        $authenticator = $this->getJWTAuthenticator();
         $request = Controller::curr()->getRequest();
-        $authenticator = Injector::inst()->get(JWTAuthenticator::class);
+        $token = $this->getAuthorizationHeader($request);
+
+        // Check status of existing token
+        /** @var JWTRecord $record */
+        list($record, $status) = $authenticator->validateToken($token, $request);
         $member = null;
-        $result = new ValidationResult();
-        $matches = HeaderExtractor::getAuthorizationHeader($request);
-
-        if (!empty($matches[1])) {
-            $member = $authenticator->authenticate(['token' => $matches[1]], $request, $result);
+        switch ($status) {
+            case TokenStatusEnum::STATUS_OK:
+            case TokenStatusEnum::STATUS_EXPIRED:
+                $member = $record->Member();
+                $renewable = true;
+                break;
+            case TokenStatusEnum::STATUS_DEAD:
+            case TokenStatusEnum::STATUS_INVALID:
+            default:
+                $member = null;
+                $renewable = false;
+                break;
         }
 
-        $expired = false;
-        // If we have a valid member, or there are no matches, there's no reason to go in here
-        if ($member === null && !empty($matches[1])) {
-            foreach ($result->getMessages() as $message) {
-                if (strpos($message['message'], 'Token is expired') !== false) {
-                    // If expired is true, the rest of the token is valid, so we can refresh
-                    $expired = true;
-                    // We need a member, even if the result is false
-                    $parser = new Parser();
-                    $parsedToken = $parser->parse((string)$matches[1]);
-                    /** @var Member $member */
-                    $member = Member::get()
-                        ->filter(['JWTUniqueID' => $parsedToken->getClaim('jti')])
-                        ->byID($parsedToken->getClaim('uid'));
-                }
-            }
-        } elseif ($member) {
-            $expired = true;
+        // Check if renewable
+        if (!$renewable) {
+            return $this->generateResponse($status);
         }
 
-        if ($expired && $member) {
-            $member->Token = $authenticator->generateToken($member);
-        } else {
-            // Everything is wrong, give an empty member without token
-            $member = Member::create(['ID' => 0, 'FirstName' => 'Anonymous']);
-        }
-        // Maybe not _everything_, we possibly have an anonymous allowed user
-        if ($member->ID === 0 && JWTAuthenticator::config()->get('anonymous_allowed')) {
-            $member->Token = $authenticator->generateToken($member);
-        }
-
-        return $member;
+        // Create new token for member
+        $newToken = $authenticator->generateToken($request, $member);
+        return $this->generateResponse(TokenStatusEnum::STATUS_OK, $member, $newToken->__toString());
     }
 }

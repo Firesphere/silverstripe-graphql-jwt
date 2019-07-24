@@ -2,13 +2,12 @@
 
 namespace Firesphere\GraphQLJWT\Tests;
 
-use Firesphere\GraphQLJWT\Authentication\JWTAuthenticator;
+use Firesphere\GraphQLJWT\Authentication\AnonymousUserAuthenticator;
 use Firesphere\GraphQLJWT\Mutations\CreateTokenMutationCreator;
 use GraphQL\Type\Definition\ResolveInfo;
-use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Environment;
-use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
+use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\Member;
 
 class CreateTokenMutationCreatorTest extends SapphireTest
@@ -25,14 +24,12 @@ class CreateTokenMutationCreatorTest extends SapphireTest
         $this->member = $this->objFromFixture(Member::class, 'admin');
     }
 
-    public function tearDown()
-    {
-        parent::tearDown();
-    }
-
+    /**
+     * @throws ValidationException
+     */
     public function testResolveValid()
     {
-        $createToken = Injector::inst()->get(CreateTokenMutationCreator::class);
+        $createToken = CreateTokenMutationCreator::singleton();
 
         $response = $createToken->resolve(
             null,
@@ -41,40 +38,51 @@ class CreateTokenMutationCreatorTest extends SapphireTest
             new ResolveInfo([])
         );
 
-        $this->assertTrue($response instanceof Member);
-        $this->assertNotNull($response->Token);
+        $this->assertTrue($response['Member'] instanceof Member);
+        $this->assertNotNull($response['Token']);
     }
 
+    /**
+     * @throws ValidationException
+     */
     public function testResolveInvalidWithAllowedAnonymous()
     {
-        Config::modify()->set(JWTAuthenticator::class, 'anonymous_allowed', true);
-        $authenticator = Injector::inst()->get(CreateTokenMutationCreator::class);
+        $authenticator = CreateTokenMutationCreator::singleton();
+
+        // Inject custom authenticator
+        $authenticator->setCustomAuthenticators([
+            AnonymousUserAuthenticator::singleton(),
+        ]);
 
         $response = $authenticator->resolve(
             null,
-            ['Email' => 'admin@silverstripe.com', 'Password' => 'wrong'],
+            ['Email' => 'anonymous'],
             [],
             new ResolveInfo([])
         );
 
-        $this->assertTrue($response instanceof Member);
-        $this->assertEquals(0, $response->ID);
-        $this->assertNotNull($response->Token);
+        /** @var Member $member */
+        $member = $response['Member'];
+        $this->assertTrue($member instanceof Member);
+        $this->assertTrue($member->exists());
+        $this->assertEquals($member->Email, 'anonymous');
+        $this->assertNotNull($response['Token']);
     }
 
+    /**
+     * @throws ValidationException
+     */
     public function testResolveInvalidWithoutAllowedAnonymous()
     {
-        Config::modify()->set(JWTAuthenticator::class, 'anonymous_allowed', false);
-        $authenticator = Injector::inst()->get(CreateTokenMutationCreator::class);
-
+        $authenticator = CreateTokenMutationCreator::singleton();
         $response = $authenticator->resolve(
             null,
-            ['Email' => 'admin@silverstripe.com', 'Password' => 'wrong'],
+            ['Email' => 'anonymous'],
             [],
             new ResolveInfo([])
         );
 
-        $this->assertTrue($response instanceof Member);
-        $this->assertNull($response->Token);
+        $this->assertNull($response['Member']);
+        $this->assertNull($response['Token']);
     }
 }

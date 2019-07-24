@@ -1,19 +1,32 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Firesphere\GraphQLJWT\Queries;
 
+use App\Users\GraphQL\Types\TokenStatusEnum;
+use BadMethodCallException;
+use Exception;
 use Firesphere\GraphQLJWT\Authentication\JWTAuthenticator;
 use Firesphere\GraphQLJWT\Helpers\HeaderExtractor;
+use Firesphere\GraphQLJWT\Helpers\MemberTokenGenerator;
+use Firesphere\GraphQLJWT\Helpers\RequiresAuthenticator;
+use Firesphere\GraphQLJWT\Model\JWTRecord;
 use GraphQL\Type\Definition\ResolveInfo;
+use GraphQL\Type\Definition\Type;
+use OutOfBoundsException;
+use Psr\Container\NotFoundExceptionInterface;
 use SilverStripe\Control\Controller;
-use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Core\Extensible;
 use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\QueryCreator;
-use SilverStripe\ORM\ValidationResult;
 
 class ValidateTokenQueryCreator extends QueryCreator implements OperationResolver
 {
-    public function attributes()
+    use RequiresAuthenticator;
+    use HeaderExtractor;
+    use MemberTokenGenerator;
+    use Extensible;
+
+    public function attributes(): array
     {
         return [
             'name'        => 'validateToken',
@@ -21,14 +34,14 @@ class ValidateTokenQueryCreator extends QueryCreator implements OperationResolve
         ];
     }
 
-    public function args()
+    public function args(): array
     {
         return [];
     }
 
-    public function type()
+    public function type(): Type
     {
-        return $this->manager->getType('ValidateToken');
+        return $this->manager->getType('MemberToken');
     }
 
     /**
@@ -37,37 +50,21 @@ class ValidateTokenQueryCreator extends QueryCreator implements OperationResolve
      * @param mixed $context
      * @param ResolveInfo $info
      * @return array
-     * @throws \Psr\Container\NotFoundExceptionInterface
-     * @throws \OutOfBoundsException
-     * @throws \BadMethodCallException
+     * @throws NotFoundExceptionInterface
+     * @throws OutOfBoundsException
+     * @throws BadMethodCallException
+     * @throws Exception
      */
-    public function resolve($object, array $args, $context, ResolveInfo $info)
+    public function resolve($object, array $args, $context, ResolveInfo $info): array
     {
         /** @var JWTAuthenticator $authenticator */
-        $authenticator = Injector::inst()->get(JWTAuthenticator::class);
-        $msg = [];
+        $authenticator = $this->getJWTAuthenticator();
         $request = Controller::curr()->getRequest();
-        $matches = HeaderExtractor::getAuthorizationHeader($request);
-        $result = new ValidationResult();
-        $code = 401;
+        $token = $this->getAuthorizationHeader($request);
 
-        if (!empty($matches[1])) {
-            $authenticator->authenticate(['token' => $matches[1]], $request, $result);
-            if ($result->isValid()) {
-                $code = 200;
-            }
-        } else {
-            $result->addError('No Bearer token found');
-        }
-
-        foreach ($result->getMessages() as $message) {
-            if (strpos($message['message'], 'Token is expired') === 0) {
-                // An expired token is code 426 `Update required`
-                $code = 426;
-            }
-            $msg[] = $message['message'];
-        }
-
-        return ['Valid' => $result->isValid(), 'Message' => implode('; ', $msg), 'Code' => $code];
+        /** @var JWTRecord $record */
+        list($record, $status) = $authenticator->validateToken($token, $request);
+        $member = $status === TokenStatusEnum::STATUS_OK ? $record->Member() : null;
+        return $this->generateResponse($status, $member, $token);
     }
 }

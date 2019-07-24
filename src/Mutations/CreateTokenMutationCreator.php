@@ -1,22 +1,58 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Firesphere\GraphQLJWT\Mutations;
 
-use Firesphere\GraphQLJWT\Authentication\JWTAuthenticator;
+use App\Users\GraphQL\Types\TokenStatusEnum;
+use Firesphere\GraphQLJWT\Extensions\MemberExtension;
+use Firesphere\GraphQLJWT\Helpers\MemberTokenGenerator;
+use Firesphere\GraphQLJWT\Helpers\RequiresAuthenticator;
+use Generator;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
+use Psr\Container\NotFoundExceptionInterface;
 use SilverStripe\Control\Controller;
-use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Control\HTTPRequest;
+use SilverStripe\Core\Extensible;
 use SilverStripe\GraphQL\MutationCreator;
 use SilverStripe\GraphQL\OperationResolver;
+use SilverStripe\ORM\ValidationException;
+use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Security\Authenticator;
-use SilverStripe\Security\IdentityStore;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
 
 class CreateTokenMutationCreator extends MutationCreator implements OperationResolver
 {
-    public function attributes()
+    use RequiresAuthenticator;
+    use MemberTokenGenerator;
+    use Extensible;
+
+    /**
+     * Extra authenticators to use for logging in with username / password
+     *
+     * @var Authenticator[]
+     */
+    protected $customAuthenticators = [];
+
+    /**
+     * @return Authenticator[]
+     */
+    public function getCustomAuthenticators(): array
+    {
+        return $this->customAuthenticators;
+    }
+
+    /**
+     * @param Authenticator[] $authenticators
+     * @return CreateTokenMutationCreator
+     */
+    public function setCustomAuthenticators(array $authenticators): self
+    {
+        $this->customAuthenticators = $authenticators;
+        return $this;
+    }
+
+    public function attributes(): array
     {
         return [
             'name'        => 'createToken',
@@ -24,16 +60,16 @@ class CreateTokenMutationCreator extends MutationCreator implements OperationRes
         ];
     }
 
-    public function type()
+    public function type(): Type
     {
         return $this->manager->getType('MemberToken');
     }
 
-    public function args()
+    public function args(): array
     {
         return [
             'Email'    => ['type' => Type::nonNull(Type::string())],
-            'Password' => ['type' => Type::nonNull(Type::string())]
+            'Password' => ['type' => Type::string()]
         ];
     }
 
@@ -42,42 +78,60 @@ class CreateTokenMutationCreator extends MutationCreator implements OperationRes
      * @param array $args
      * @param mixed $context
      * @param ResolveInfo $info
-     * @return null|Member|static
-     * @throws \Psr\Container\NotFoundExceptionInterface
+     * @return array
+     * @throws NotFoundExceptionInterface
+     * @throws ValidationException
      */
-    public function resolve($object, array $args, $context, ResolveInfo $info)
+    public function resolve($object, array $args, $context, ResolveInfo $info): array
     {
-        /** @var Security $security */
-        $security = Injector::inst()->get(Security::class);
-        $authenticators = $security->getApplicableAuthenticators(Authenticator::LOGIN);
+        // Authenticate this member
         $request = Controller::curr()->getRequest();
-        $member = null;
+        $member = $this->getAuthenticatedMember($args, $request);
 
-        if (count($authenticators)) {
-            /** @var Authenticator $authenticator */
-            foreach ($authenticators as $authenticator) {
-                $member = $authenticator->authenticate($args, $request, $result);
-                if ($result->isValid()) {
-                    break;
-                }
+        // Handle unauthenticated
+        if (!$member) {
+            return $this->generateResponse(TokenStatusEnum::STATUS_BAD_LOGIN);
+        }
+
+        // Create new token from this member
+        $authenticator = $this->getJWTAuthenticator();
+        $token = $authenticator->generateToken($request, $member);
+        return $this->generateResponse(TokenStatusEnum::STATUS_OK, $member, $token->__toString());
+    }
+
+    /**
+     * Get an authenticated member from the given request
+     *
+     * @param array $args
+     * @param HTTPRequest $request
+     * @return Member|MemberExtension
+     */
+    protected function getAuthenticatedMember(array $args, HTTPRequest $request): ?Member
+    {
+        // Login with authenticators
+        foreach ($this->getLoginAuthenticators() as $authenticator) {
+            $result = ValidationResult::create();
+            $member = $authenticator->authenticate($args, $request, $result);
+            if ($member && $result->isValid()) {
+                return $member;
             }
         }
-        $authenticator = Injector::inst()->get(JWTAuthenticator::class);
 
-        if ($member instanceof Member) {
-            $member->Token = $authenticator->generateToken($member);
-        } elseif (JWTAuthenticator::config()->get('anonymous_allowed')) {
-            $member = Member::create(['ID' => 0, 'FirstName' => 'Anonymous']);
-            // Create an anonymous token
-            $member->Token = $authenticator->generateToken($member);
-        } else {
-            Security::setCurrentUser(null);
-            Injector::inst()->get(IdentityStore::class)->logOut();
+        return null;
+    }
 
-            // Return a token-less member
-            $member = Member::create();
-        }
+    /**
+     * Get any authenticator we should use for logging in users
+     *
+     * @return Authenticator[]|Generator
+     */
+    protected function getLoginAuthenticators(): Generator
+    {
+        // Check injected authenticators
+        yield from $this->getCustomAuthenticators();
 
-        return $member;
+        // Get other login handlers from Security
+        $security = Security::singleton();
+        yield from $security->getApplicableAuthenticators(Authenticator::LOGIN);
     }
 }
