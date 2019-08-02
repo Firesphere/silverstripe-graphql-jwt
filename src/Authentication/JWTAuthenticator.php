@@ -278,7 +278,7 @@ class JWTAuthenticator extends MemberAuthenticator
     {
         // Parse token
         $parsedToken = $this->parseToken($token);
-        if ($parsedToken) {
+        if (!$parsedToken) {
             return [null, TokenStatusEnum::STATUS_INVALID];
         }
 
