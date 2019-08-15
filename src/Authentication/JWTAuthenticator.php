@@ -2,12 +2,12 @@
 
 namespace Firesphere\GraphQLJWT\Authentication;
 
-use App\Users\GraphQL\Types\TokenStatusEnum;
 use BadMethodCallException;
 use Exception;
 use Firesphere\GraphQLJWT\Extensions\MemberExtension;
 use Firesphere\GraphQLJWT\Helpers\MemberTokenGenerator;
 use Firesphere\GraphQLJWT\Model\JWTRecord;
+use Firesphere\GraphQLJWT\Types\TokenStatusEnum;
 use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\Parser;
 use Lcobucci\JWT\Signer;

@@ -2,10 +2,10 @@
 
 namespace Firesphere\GraphQLJWT\Mutations;
 
-use App\Users\GraphQL\Types\TokenStatusEnum;
 use Firesphere\GraphQLJWT\Extensions\MemberExtension;
 use Firesphere\GraphQLJWT\Helpers\MemberTokenGenerator;
 use Firesphere\GraphQLJWT\Helpers\RequiresAuthenticator;
+use Firesphere\GraphQLJWT\Types\TokenStatusEnum;
 use Generator;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;

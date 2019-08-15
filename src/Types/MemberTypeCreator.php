@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace App\Users\GraphQL\Types;
+namespace Firesphere\GraphQLJWT\Types;
 
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\TypeCreator;

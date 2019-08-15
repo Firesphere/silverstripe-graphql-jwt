@@ -1,3 +1,5 @@
 /vendor
 /mysite
 /resources
+composer.lock
+/resources

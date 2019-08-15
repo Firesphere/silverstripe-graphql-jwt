@@ -2,13 +2,13 @@
 
 namespace Firesphere\GraphQLJWT\Mutations;
 
-use App\Users\GraphQL\Types\TokenStatusEnum;
 use BadMethodCallException;
 use Exception;
 use Firesphere\GraphQLJWT\Helpers\HeaderExtractor;
 use Firesphere\GraphQLJWT\Helpers\MemberTokenGenerator;
 use Firesphere\GraphQLJWT\Helpers\RequiresAuthenticator;
 use Firesphere\GraphQLJWT\Model\JWTRecord;
+use Firesphere\GraphQLJWT\Types\TokenStatusEnum;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use OutOfBoundsException;

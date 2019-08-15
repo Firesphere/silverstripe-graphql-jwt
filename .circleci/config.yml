@@ -6,7 +6,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: brettt89/silverstripe-web
+      - image: circleci/php:7.1-node-browsers
         environment:
           - SS_DATABASE_CLASS=MySQLPDODatabase
           - SS_DATABASE_SERVER=127.0.0.1
@@ -26,6 +26,7 @@ jobs:
     working_directory: ~/var/www
 
     steps:
+      - run: sudo composer self-update
       - run: composer create-project firesphere/graphql-jwt:dev-master ~/var/www -n
       - run: vendor/bin/sake dev/build
 

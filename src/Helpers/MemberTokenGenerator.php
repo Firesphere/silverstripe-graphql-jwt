@@ -2,7 +2,7 @@
 
 namespace Firesphere\GraphQLJWT\Helpers;
 
-use App\Users\GraphQL\Types\TokenStatusEnum;
+use Firesphere\GraphQLJWT\Types\TokenStatusEnum;
 use InvalidArgumentException;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Security\Member;
