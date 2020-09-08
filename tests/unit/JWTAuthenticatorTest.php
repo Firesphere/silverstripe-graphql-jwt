@@ -2,11 +2,11 @@
 
 namespace Firesphere\GraphQLJWT\Tests;
 
-use App\Users\GraphQL\Types\TokenStatusEnum;
 use Exception;
 use Firesphere\GraphQLJWT\Authentication\JWTAuthenticator;
 use Firesphere\GraphQLJWT\Extensions\MemberExtension;
 use Firesphere\GraphQLJWT\Mutations\CreateTokenMutationCreator;
+use Firesphere\GraphQLJWT\Types\TokenStatusEnum;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Control\Controller;
 use SilverStripe\Core\Environment;

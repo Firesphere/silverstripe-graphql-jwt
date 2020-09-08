@@ -6,14 +6,16 @@ version: 2
 jobs:
   build:
     docker:
-      - image: brettt89/silverstripe-web
+      - image: mattrayner/lamp:latest-1804
         environment:
-          - SS_DATABASE_CLASS=MySQLPDODatabase
+          # ss config
+          - SS_DATABASE_CLASS=MySQLDatabase
           - SS_DATABASE_SERVER=127.0.0.1
           - SS_DATABASE_USERNAME=root
           - SS_DATABASE_PASSWORD=ubuntu
           - SS_DATABASE_NAME=circle_test
           - SS_ENVIRONMENT_TYPE=dev
+          # jwt prefix
           - JWT_PREFIX=jwt_
           - JWT_SIGNER_KEY=test_signer
       - image: circleci/mysql:5.7
@@ -26,6 +28,8 @@ jobs:
     working_directory: ~/var/www
 
     steps:
+      - run: apt-get update && apt-get -y upgrade && apt-get -y install php-intl && apt-get -y autoremove
+      - run: composer self-update
       - run: composer create-project firesphere/graphql-jwt:dev-master ~/var/www -n
       - run: vendor/bin/sake dev/build
 

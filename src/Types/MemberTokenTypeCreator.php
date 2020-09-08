@@ -2,7 +2,6 @@
 
 namespace Firesphere\GraphQLJWT\Types;
 
-use App\Users\GraphQL\Types\TokenStatusEnum;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\TypeCreator;
 
