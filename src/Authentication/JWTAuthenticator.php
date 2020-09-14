@@ -271,10 +271,10 @@ class JWTAuthenticator extends MemberAuthenticator
     /**
      * @param string $token
      * @param HTTPRequest $request
-     * @return array Array with JWTRecord and int status (STATUS_*)
+     * @return array|null Array with JWTRecord and int status (STATUS_*)
      * @throws BadMethodCallException
      */
-    public function validateToken(string $token, HTTPrequest $request): array
+    public function validateToken(?string $token, HTTPrequest $request): array
     {
         // Parse token
         $parsedToken = $this->parseToken($token);
@@ -313,10 +313,10 @@ class JWTAuthenticator extends MemberAuthenticator
     /**
      * Parse a string into a token
      *
-     * @param string $token
+     * @param string|null $token
      * @return Token|null
      */
-    protected function parseToken(string $token): ?Token
+    protected function parseToken(?string $token): ?Token
     {
         // Ensure token given at all
         if (!$token) {
@@ -391,8 +391,8 @@ class JWTAuthenticator extends MemberAuthenticator
      *
      * @param string $key
      * @param string|null $default
-     * @throws LogicException Error if environment variable is required, but not configured
      * @return string|null
+     * @throws LogicException Error if environment variable is required, but not configured
      */
     protected function getEnv(string $key, $default = null): ?string
     {
