@@ -5,16 +5,16 @@ SilverStripe\Core\Injector\Injector:
   SilverStripe\Security\AuthenticationHandler:
     properties:
       Handlers:
-        jwt: %$Firesphere\GraphQLJWT\Authentication\JWTAuthenticationHandler
+        jwt: '%$Firesphere\GraphQLJWT\Authentication\JWTAuthenticationHandler'
   Firesphere\GraphQLJWT\Authentication\JWTAuthenticationHandler:
     properties:
-      JWTAuthenticator: %$Firesphere\GraphQLJWT\Authentication\JWTAuthenticator
+      JWTAuthenticator: '%$Firesphere\GraphQLJWT\Authentication\JWTAuthenticator'
   Firesphere\GraphQLJWT\Mutations\CreateTokenMutationCreator:
     properties:
-      JWTAuthenticator: %$Firesphere\GraphQLJWT\Authentication\JWTAuthenticator
+      JWTAuthenticator: '%$Firesphere\GraphQLJWT\Authentication\JWTAuthenticator'
   Firesphere\GraphQLJWT\Mutations\RefreshTokenMutationCreator:
     properties:
-      JWTAuthenticator: %$Firesphere\GraphQLJWT\Authentication\JWTAuthenticator
+      JWTAuthenticator: '%$Firesphere\GraphQLJWT\Authentication\JWTAuthenticator'
   Firesphere\GraphQLJWT\Queries\ValidateTokenQueryCreator:
     properties:
-      JWTAuthenticator: %$Firesphere\GraphQLJWT\Authentication\JWTAuthenticator
+      JWTAuthenticator: '%$Firesphere\GraphQLJWT\Authentication\JWTAuthenticator'
