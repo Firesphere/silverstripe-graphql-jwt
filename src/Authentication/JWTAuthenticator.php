@@ -3,6 +3,7 @@
 namespace Firesphere\GraphQLJWT\Authentication;
 
 use BadMethodCallException;
+use DateTimeImmutable;
 use Exception;
 use Firesphere\GraphQLJWT\Extensions\MemberExtension;
 use Firesphere\GraphQLJWT\Helpers\MemberTokenGenerator;
@@ -296,7 +297,8 @@ class JWTAuthenticator extends MemberAuthenticator
         }
 
         // If the token is invalid, but not because it has expired, fail
-        if (!$parsedToken->isExpired()) {
+        $now = new DateTimeImmutable('now');
+        if (!$parsedToken->isExpired($now)) {
             return [$record, TokenStatusEnum::STATUS_INVALID];
         }
 
