@@ -2,7 +2,7 @@
 
 namespace Firesphere\GraphQLJWT\Helpers;
 
-use Firesphere\GraphQLJWT\Types\TokenStatusEnum;
+use Firesphere\GraphQLJWT\Resolvers\Resolver;
 use InvalidArgumentException;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Security\Member;
@@ -21,18 +21,18 @@ trait MemberTokenGenerator
      * @return string
      * @throws InvalidArgumentException
      */
-    public function getErrorMessage(string $status): string
+    public static function getErrorMessage(string $status): string
     {
         switch ($status) {
-            case TokenStatusEnum::STATUS_EXPIRED:
+            case Resolver::STATUS_EXPIRED:
                 return _t('JWT.STATUS_EXPIRED', 'Token is expired, please renew your token with a refreshToken query');
-            case TokenStatusEnum::STATUS_DEAD:
+            case Resolver::STATUS_DEAD:
                 return _t('JWT.STATUS_DEAD', 'Token is expired, but is too old to renew. Please log in again.');
-            case TokenStatusEnum::STATUS_INVALID:
+            case Resolver::STATUS_INVALID:
                 return _t('JWT.STATUS_INVALID', 'Invalid token provided');
-            case TokenStatusEnum::STATUS_BAD_LOGIN:
+            case Resolver::STATUS_BAD_LOGIN:
                 return _t('JWT.STATUS_BAD_LOGIN', 'Sorry your email and password combination is rejected');
-            case TokenStatusEnum::STATUS_OK:
+            case Resolver::STATUS_OK:
                 return _t('JWT.STATUS_OK', 'Token is ok');
             default:
                 throw new InvalidArgumentException("Invalid status");
@@ -47,20 +47,19 @@ trait MemberTokenGenerator
      * @param string $token
      * @return array Response in format required by MemberToken
      */
-    protected function generateResponse(string $status, Member $member = null, string $token = null): array
+    protected static function generateResponse(string $status, Member $member = null, string $token = null): array
     {
         // Success response
-        $valid = $status === TokenStatusEnum::STATUS_OK;
+        $valid = $status === Resolver::STATUS_OK;
         $response = [
-            'Valid'   => $valid,
-            'Member'  => $valid && $member && $member->exists() ? $member : null,
-            'Token'   => $token,
-            'Status'  => $status,
-            'Code'    => $valid ? 200 : 401,
-            'Message' => $this->getErrorMessage($status),
+            'valid'   => $valid,
+            'member'  => $valid && $member && $member->exists() ? $member : null,
+            'token'   => $token,
+            'status'  => $status,
+            'code'    => $valid ? 200 : 401,
+            'message' => static::getErrorMessage($status),
         ];
 
-        $this->extend('updateMemberToken', $response);
         return $response;
     }
 }
