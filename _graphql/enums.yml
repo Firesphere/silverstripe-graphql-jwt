@@ -1,0 +1,17 @@
+TokenStatus:
+  values:
+    OK:
+      value: OK
+      description: JWT token is valid
+    INVALID:
+      value: INVALID
+      description: JWT token is valid
+    EXPIRED:
+      value: EXPIRED
+      description: JWT token has expired, but can be renewed
+    DEAD:
+      value: DEAD
+      description: JWT token has expired and cannot be renewed
+    BAD_LOGIN:
+      value: BAD_LOGIN
+      description: JWT token could not be created due to invalid login credentials

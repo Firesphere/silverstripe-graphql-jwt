@@ -1,0 +1,9 @@
+MemberToken:
+  fields:
+    valid: Boolean
+    member:
+      model: SilverStripe\Security\Member
+    token: String
+    status: TokenStatus
+    code: Int
+    message: String

@@ -6,10 +6,10 @@ use BadMethodCallException;
 use Exception;
 use Firesphere\GraphQLJWT\Extensions\MemberExtension;
 use Firesphere\GraphQLJWT\Helpers\HeaderExtractor;
-use Firesphere\GraphQLJWT\Helpers\RequiresAuthenticator;
 use OutOfBoundsException;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Security\AuthenticationHandler;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
@@ -22,7 +22,6 @@ use SilverStripe\Security\Security;
 class JWTAuthenticationHandler implements AuthenticationHandler
 {
     use HeaderExtractor;
-    use RequiresAuthenticator;
     use Injectable;
 
     /**
@@ -41,8 +40,7 @@ class JWTAuthenticationHandler implements AuthenticationHandler
         }
 
         // Validate the token. This is critical for security
-        $member = $this
-            ->getJWTAuthenticator()
+        $member = Injector::inst()->get(JWTAuthenticator::class)
             ->authenticate(['token' => $token], $request);
 
         if ($member) {

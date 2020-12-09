@@ -5,6 +5,7 @@ namespace Firesphere\GraphQLJWT\Tests;
 use Exception;
 use Firesphere\GraphQLJWT\Authentication\JWTAuthenticationHandler;
 use Firesphere\GraphQLJWT\Mutations\CreateTokenMutationCreator;
+use Firesphere\GraphQLJWT\Resolvers\Resolver;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Control\Controller;
 use SilverStripe\Core\Environment;
@@ -20,25 +21,18 @@ class JWTAuthenticationHandlerTest extends SapphireTest
 
     protected $token;
 
-    /**
-     * @throws ValidationException
-     */
     public function setUp()
     {
         Environment::putEnv('JWT_SIGNER_KEY=test_signer');
 
         parent::setUp();
         $this->member = $this->objFromFixture(Member::class, 'admin');
-        $createToken = CreateTokenMutationCreator::singleton();
-
-        $response = $createToken->resolve(
+        $response = Resolver::resolveCreateToken(
             null,
-            ['Email' => 'admin@silverstripe.com', 'Password' => 'error'],
-            [],
-            new ResolveInfo([])
+            ['email' => 'admin@silverstripe.com', 'password' => 'error'],
         );
 
-        $this->token = $response['Token'];
+        $this->token = $response['token'];
     }
 
     /**

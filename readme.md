@@ -43,43 +43,20 @@ The signer key [for HMAC can be of any length (keys longer than B bytes are firs
 Since admin/graphql is reserved exclusively for CMS graphql access, it will be necessary for you to register a custom schema for
 your front-end application, and apply the provided queries and mutations to that.
 
-For example, given you've decided to create a schema named `frontend` at the url `/api`
+For example, given you've decided to create a schema named `default` at the url `/graphql`
+(which is provided by the core recipe out of the box), all you need to do is
+add the `firesphere/graphql-jwt` config to your schema.
 
 ```yml
 ---
 Name: my-graphql-schema
 ---
-SilverStripe\GraphQL\Manager:
+SilverStripe\GraphQL\Schema\Schema:
   schemas:
-    frontend:
-      types:
-        MemberToken: 'Firesphere\GraphQLJWT\Types\MemberTokenTypeCreator'
-        Member: 'Firesphere\GraphQLJWT\Types\MemberTypeCreator'
-      mutations:
-        createToken: 'Firesphere\GraphQLJWT\Mutations\CreateTokenMutationCreator'
-        refreshToken: 'Firesphere\GraphQLJWT\Mutations\RefreshTokenMutationCreator'
-      queries:
-        validateToken: 'Firesphere\GraphQLJWT\Queries\ValidateTokenQueryCreator'
----
-Name: my-graphql-injections
----
-SilverStripe\Core\Injector\Injector:
-  SilverStripe\GraphQL\Manager.frontend:
-    class: SilverStripe\GraphQL\Manager
-    constructor:
-      identifier: frontend
-  SilverStripe\GraphQL\Controller.frontend:
-    class: SilverStripe\GraphQL\Controller
-    constructor:
-      manager: '%$SilverStripe\GraphQL\Manager.frontend'
----
-Name: my-graphql-routes
----
-SilverStripe\Control\Director:
-  rules:
-    api:
+    default:
+      src:
+        - 'firesphere/graphql-jwt: _graphql'
       Controller: '%$SilverStripe\GraphQL\Controller.frontend'
-      Stage: Live
 ```
 
 
@@ -89,11 +66,13 @@ To generate a JWT token, send a login request to the `createToken` mutator:
 
 ```graphql
 mutation {
-  createToken(Email: "admin", Password: "password") {
-    Token, // ...request or you won't have a token
-    ID,
-    FirstName,
-    Surname
+  createToken(email: "admin", password: "password") {
+    token // ...request or you won't have a token
+    id
+    member {
+        firstName
+        surname
+    }
   }
 }
 ```
@@ -105,9 +84,9 @@ If you have an app and want to validate your token, you can address the `validat
 ```graphql
 query validateToken {
   validateToken {
-    Valid
-    Message
-    Code
+    valid
+    message
+    code
   }
 }
 ```
@@ -118,16 +97,16 @@ It only needs to call the endpoint. The token should be in the header, via your 
 {
   "data": {
     "validateToken": {
-      "Valid": true,
-      "Message": "",
-      "Code": 200,
+      "valid": true,
+      "message": "",
+      "code": 200,
       "__typename": "ValidateToken"
     }
   }
 }
 ```
 
-If the token is invalid, `Valid` will be `false`.
+If the token is invalid, `valid` will be `false`.
 
 ## Anonymous tokens
 
@@ -138,7 +117,7 @@ To enable anonymous tokens, add the following to your configuration `.yml`:
 
 ```yaml
 SilverStripe\Core\Injector\Injector:
-  Firesphere\GraphQLJWT\Mutations\CreateTokenMutationCreator:
+  Firesphere\GraphQLJWT\Authentication\CustomAuthenticatorRegistry:
     properties:
       CustomAuthenticators:
         - Firesphere\GraphQLJWT\Authentication\AnonymousUserAuthenticator
@@ -148,14 +127,14 @@ You can then create an anonymous login with the below query.
 
 ```graphql
 mutation {
-  createToken(Email: "anonymous") {
-    Token
+  createToken(email: "anonymous") {
+    token
   }
 }
 ```
 
 Note: If the default anonymous authenticator doesn't suit your purposes, you can inject any other
-core SilverStripe authenticator into `CustomAuthenticators`.
+core Silverstripe CMS authenticator into `CustomAuthenticators`.
 
 Warning: The default `AnonymousUserAuthenticator` is not appropriate for general usage, so don't
 register this under the core `Security` class!
@@ -188,7 +167,7 @@ Currently, the default method for encrypting the JWT is with SHA256. JWT is sign
 
 ## Supported services
 
-By default, JWT only supports login. As it's tokens can not be disabled, nor used for password changes or resets.
+By default, JWT only supports login. As its tokens can not be disabled, nor used for password changes or resets.
 
 ## Caveats
 

@@ -1,0 +1,3 @@
+validateToken:
+  description: Validates a given token from the Bearer header
+  type: MemberToken
