@@ -23,6 +23,12 @@ JWT_PREFIX="[your secret prefix]"
 JWT_SIGNER_KEY="[your secret key]"
 ```
 
+A quick way to generate a secure random value value for `JWT_SIGNER_KEY` is through a PHP CLI command:
+
+```
+php -r 'echo substr(base64_encode(random_bytes(64)), 0, 64) . "\n";'
+```
+
 You can also use public/private key files, using the following:
 
 ```ini
