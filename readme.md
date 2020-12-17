@@ -16,20 +16,19 @@ composer require firesphere/graphql-jwt
 
 The default config is available in `_config\config.yml`.
 
-To set your signer key and UID prefix, add the following to your `.env`:
+In order to securely process and store data via JWT,
+you need to set a secret key in your `.env` file:
 
 ```ini
-JWT_PREFIX="[your secret prefix]"
 JWT_SIGNER_KEY="[your secret key]"
 ```
-
 A quick way to generate a secure random value value for `JWT_SIGNER_KEY` is through a PHP CLI command:
 
 ```
 php -r 'echo substr(base64_encode(random_bytes(64)), 0, 64) . "\n";'
 ```
 
-You can also use public/private key files, using the following:
+You can also use public/private key files.
 
 ```ini
 JWT_SIGNER_KEY="./path/to/private.key"
@@ -186,6 +185,16 @@ After logging in, you will receive a token which can be used for further request
 
 ```
 Authorization: Bearer [token]
+```
+
+## Prefix
+
+A prefix can be optionally associated with the unique identifier of a JWT record.
+This can make it easier to distinguish JWT records created in different contexts,
+e.g. on a specific domain or environment type. It is not required for security purposes.
+
+```
+JWT_PREFIX="[your secret prefix]"
 ```
 
 ## Security
