@@ -4,3 +4,6 @@ refreshToken:
 'createToken(email: String!, password: String)':
   type: MemberToken
   description: Creates a JWT token for a valid user
+logOut:
+  type: MemberToken
+  description: Destroy the current token

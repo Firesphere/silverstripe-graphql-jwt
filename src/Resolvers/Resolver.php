@@ -140,6 +140,24 @@ class Resolver
         return static::generateResponse(self::STATUS_OK, $member, $token->__toString());
     }
 
+    public static function resolveLogOut($object, array $args): array
+    {
+        /** @var JWTAuthenticator $authenticator */
+        $authenticator = Injector::inst()->get(JWTAuthenticator::class);
+        $request = Controller::curr()->getRequest();
+        $token = static::getAuthorizationHeader($request);
+
+        /** @var JWTRecord $record */
+        list($record, $status) = $authenticator->validateToken($token, $request);
+        $member = $status === self::STATUS_OK ? $record->Member() : null;
+        if (!$member) {
+            return static::generateResponse($status, $member, $token);
+        } else {
+            $record->delete();
+            return static::generateResponse(self::STATUS_DEAD, $member, $token);
+        }
+    }
+
     /**
      * Get any authenticator we should use for logging in users
      *
