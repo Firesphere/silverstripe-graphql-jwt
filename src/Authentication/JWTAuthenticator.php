@@ -101,7 +101,7 @@ class JWTAuthenticator extends MemberAuthenticator
      * @config
      * @var Config
      */
-    private static $config;
+    private $config;
 
     public function __construct(Configuration $config = null)
     {
