@@ -248,7 +248,7 @@ class JWTAuthenticator extends MemberAuthenticator
             // Configures the issuer (iss claim)
             ->issuedBy($request->getHeader('Origin'))
             // Configures the audience (aud claim)
-            ->permittedFor(Director::absoluteBaseURL())
+            ->permittedFor(...$this->getAllowedDomains())
             // Configures the id (jti claim), replicating as a header item
             ->identifiedBy($uniqueID)->withHeader('jti', $uniqueID)
             // Configures the time that the token was issue (iat claim)
@@ -427,5 +427,10 @@ class JWTAuthenticator extends MemberAuthenticator
     protected function getNowPlus($seconds)
     {
         return $this->getNow()->add(new DateInterval(sprintf("PT%dS", $seconds)));
+    }
+
+    protected function getAllowedDomains(): array
+    {
+        return $this->config()->get('signer_domains');
     }
 }
