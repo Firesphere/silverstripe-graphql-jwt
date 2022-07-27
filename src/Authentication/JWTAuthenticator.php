@@ -244,11 +244,14 @@ class JWTAuthenticator extends MemberAuthenticator
 
         // Create builder for this record
         $builder = new Builder();
+
+        foreach ($this->getAllowedDomains() as $domain) {
+            $builder = $builder->permittedFor($domain);
+        }
+
         $token = $builder
             // Configures the issuer (iss claim)
             ->issuedBy($request->getHeader('Origin'))
-            // Configures the audience (aud claim)
-            ->permittedFor(...$this->getAllowedDomains())
             // Configures the id (jti claim), replicating as a header item
             ->identifiedBy($uniqueID)->withHeader('jti', $uniqueID)
             // Configures the time that the token was issue (iat claim)
