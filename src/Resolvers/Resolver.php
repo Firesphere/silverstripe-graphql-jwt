@@ -113,7 +113,7 @@ class Resolver
 
         // Create new token for member
         $newToken = $authenticator->generateToken($request, $member);
-        return static::generateResponse(self::STATUS_OK, $member, $newToken->__toString());
+        return static::generateResponse(self::STATUS_OK, $member, $newToken->toString());
     }
 
 
@@ -137,7 +137,7 @@ class Resolver
         // Create new token from this member
         $authenticator = Injector::inst()->get(JWTAuthenticator::class);
         $token = $authenticator->generateToken($request, $member);
-        return static::generateResponse(self::STATUS_OK, $member, $token->__toString());
+        return static::generateResponse(self::STATUS_OK, $member, $token->toString());
     }
 
     public static function resolveLogOut($object, array $args): array
@@ -198,5 +198,4 @@ class Resolver
 
         return null;
     }
-
 }
