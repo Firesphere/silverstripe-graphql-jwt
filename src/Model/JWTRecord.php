@@ -25,7 +25,7 @@ class JWTRecord extends DataObject
     private static $db = [
         'UID'       => 'Varchar(255)',
         'UserAgent' => 'Text',
-        'Type' => 'String',
+        'Type' => 'Varchar(255)',
     ];
 
     private static $has_one = [
