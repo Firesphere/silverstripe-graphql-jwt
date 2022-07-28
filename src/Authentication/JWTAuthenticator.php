@@ -314,16 +314,10 @@ class JWTAuthenticator extends MemberAuthenticator
      * @throws ValidationException
      * @throws Exception
      */
-    public function generateResetToken(HTTPRequest $request, string $email): Token
+    public function generateResetToken(HTTPRequest $request, Member $member): Token
     {
         $config = static::config();
         $uniqueID = uniqid($this->getEnv('JWT_PREFIX', ''), true);
-
-        $member = Member::get()->filter('Email', $email)->first();
-
-        if (!$member) {
-            throw new ValidationException('Member not found', 'member_not_found');
-        }
 
         // Create new record
         $record = new JWTRecord();
@@ -335,9 +329,11 @@ class JWTAuthenticator extends MemberAuthenticator
             $record->write();
         }
 
+        $member->ResetToken = $record;
+        $member->write();
+
         // Get builder for this record
         $builder = $this->config->builder(ChainedFormatter::withUnixTimestampDates());
-
 
         foreach ($this->getAllowedDomains() as $domain) {
             $builder = $builder->permittedFor($domain);
