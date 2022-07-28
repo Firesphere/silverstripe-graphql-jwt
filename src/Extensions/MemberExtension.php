@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Firesphere\GraphQLJWT\Extensions;
 
@@ -25,6 +27,10 @@ class MemberExtension extends DataExtension
      * @var array
      */
     private static $jwt_subject_fields = [];
+
+    private static $has_one = [
+        'ResetToken' => JWTRecord::class,
+    ];
 
     /**
      * @config
