@@ -68,6 +68,11 @@ class Resolver
     const STATUS_BAD_REQUEST = 'BAD_REQUEST';
 
     /**
+     * Provided new password didn't validate
+     */
+    const STATUS_INVALID_PASSWORD = "INVALID_PASSWORD";
+
+    /**
      * @return mixed
      * @throws \Exception
      */
@@ -226,10 +231,13 @@ class Resolver
             return static::generateResetPasswordResponse(self::STATUS_INVALID);
         }
 
-        $success = $member->changePassword($newPassword);
-        if (!$success) {
+        $result = $member->changePassword($newPassword);
+
+        if ($result->isValid()) {
             return static::generateResetPasswordResponse(self::STATUS_OK);
         }
+
+        return static::generateInvalidPasswordResponse(self::STATUS_INVALID_PASSWORD, $result->getMessages());
     }
 
 

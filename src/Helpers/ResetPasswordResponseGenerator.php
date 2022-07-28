@@ -11,4 +11,15 @@ trait ResetPasswordResponseGenerator
       'message' => ErrorMessageGenerator::getResetPasswordMessage($status)
     ];
   }
+
+  public static function generateInvalidPasswordResponse($status, array $messages): array
+  {
+
+    $message = implode(", ", $messages);
+
+    return [
+      'successful' => $status,
+      'message' => $message,
+    ];
+  }
 }
