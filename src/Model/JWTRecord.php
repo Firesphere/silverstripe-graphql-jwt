@@ -15,12 +15,17 @@ use SilverStripe\Security\Member;
  */
 class JWTRecord extends DataObject
 {
+
+    const TYPE_AUTH = 'auth';
+
+    const TYPE_ANONYMOUS = 'anonymous';
+
     private static $table_name = 'JWTRecord';
 
     private static $db = [
         'UID'       => 'Varchar(255)',
         'UserAgent' => 'Text',
-        'isAnonymous' => 'Boolean',
+        'Type' => 'String',
     ];
 
     private static $has_one = [

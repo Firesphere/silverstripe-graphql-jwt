@@ -89,6 +89,15 @@ class JWTAuthenticator extends MemberAuthenticator
      */
     private static $nbf_expiration = 3600;
 
+
+    /**
+     * Expires after 1 hour
+     *
+     * @config
+     * @var int
+     */
+    private static $nbf_reset_expiration = 3600;
+
     /**
      * Token can be refreshed within 7 days
      *
@@ -258,6 +267,7 @@ class JWTAuthenticator extends MemberAuthenticator
         $record = new JWTRecord();
         $record->UID = $uniqueID;
         $record->UserAgent = $request->getHeader('User-Agent');
+        $record->Type = JWTRecord::TYPE_AUTH;
         $member->AuthTokens()->add($record);
         if (!$record->isInDB()) {
             $record->write();
@@ -296,6 +306,64 @@ class JWTAuthenticator extends MemberAuthenticator
     }
 
     /**
+     * Generate a new JWT token for a given request, and optional (if anonymous_allowed) user
+     *
+     * @param HTTPRequest $request
+     * @param string $email
+     * @return Token
+     * @throws ValidationException
+     * @throws Exception
+     */
+    public function generateResetToken(HTTPRequest $request, string $email): Token
+    {
+        $config = static::config();
+        $uniqueID = uniqid($this->getEnv('JWT_PREFIX', ''), true);
+
+        $member = Member::get()->filter('Email', $email)->first();
+
+        if (!$member) {
+            throw new ValidationException('Member not found', 'member_not_found');
+        }
+
+        // Create new record
+        $record = new JWTRecord();
+        $record->UID = $uniqueID;
+        $record->UserAgent = $request->getHeader('User-Agent');
+        $record->Type = JWTRecord::TYPE_ANONYMOUS;
+
+        if (!$record->isInDB()) {
+            $record->write();
+        }
+
+        // Get builder for this record
+        $builder = $this->config->builder(ChainedFormatter::withUnixTimestampDates());
+
+
+        foreach ($this->getAllowedDomains() as $domain) {
+            $builder = $builder->permittedFor($domain);
+        }
+
+        $token = $builder
+            // Configures the issuer (iss claim)
+            ->issuedBy($request->getHeader('Origin'))
+            // Configures the id (jti claim), replicating as a header item
+            ->identifiedBy($uniqueID)->withHeader('jti', $uniqueID)
+            // Configures the time that the token was issue (iat claim)
+            ->issuedAt($this->getNow())
+            // Configures the time that the token can be used (nbf claim)
+            ->canOnlyBeUsedAfter($this->getNowPlus($config->get('nbf_time')))
+            // Configures the expiration time of the token (nbf claim)
+            ->expiresAt($this->getNowPlus($config->get('nbf_reset_expiration')))
+            // Configures a new claim, called "rid"
+            ->withClaim('rid', $record->ID)
+            // Sign the key with the Signer's key
+            ->getToken($this->config->signer(), $this->config->signingKey());
+
+        // Return the token
+        return $token;
+    }
+
+    /**
      * @param string $token
      * @param HTTPRequest $request
      * @return array|null Array with JWTRecord and int status (STATUS_*)
@@ -314,6 +382,11 @@ class JWTAuthenticator extends MemberAuthenticator
         $record = JWTRecord::get()->byID($parsedToken->claims()->get('rid'));
         if (!$record) {
             return [null, Resolver::STATUS_INVALID];
+        }
+
+        // Check if token is reset-token
+        if ($record->Type !== JWTRecord::TYPE_AUTH) {
+            return [$record, Resolver::STATUS_INVALID];
         }
 
         // Verified and valid = ok!
@@ -335,6 +408,61 @@ class JWTAuthenticator extends MemberAuthenticator
 
         // If expired and cannot be renewed, it's dead
         return [$record, Resolver::STATUS_DEAD];
+    }
+
+    /**
+     * @param string $token
+     * @param HTTPRequest $request
+     * @return array|null Array with JWTRecord and int status (STATUS_*)
+     * @throws BadMethodCallException|Exception
+     */
+    public function validateAnonymousToken(?string $token, HTTPrequest $request): array
+    {
+        // Parse token
+        $parsedToken = $this->parseToken($token);
+        if (!$parsedToken) {
+            return [null, Resolver::STATUS_INVALID];
+        }
+
+        // Find local record for this token
+        /** @var JWTRecord $record */
+        $record = JWTRecord::get()->byID($parsedToken->claims()->get('rid'));
+        if (!$record) {
+            return [null, Resolver::STATUS_INVALID];
+        }
+
+        // Check if token is reset-token
+        if ($record->isAnonymous !== JWTRecord::TYPE_ANONYMOUS) {
+            return [$record, Resolver::STATUS_INVALID];
+        }
+
+        // Verified and valid = ok!
+        $valid = $this->validateParsedToken($parsedToken, $request, $record);
+        if ($valid) {
+            return [$record, Resolver::STATUS_OK];
+        }
+
+        // If the token is invalid, but not because it has expired, fail
+        if (!$parsedToken->isExpired($this->getNow())) {
+            return [$record, Resolver::STATUS_INVALID];
+        }
+
+        // If expired and cannot be renewed, it's dead
+        return [$record, Resolver::STATUS_DEAD];
+    }
+
+    public function validateResetToken(?string $token, HTTPRequest $request): array
+    {
+        list($record, $status) = $this->validateAnonymousToken($token, $request);
+
+        if ($status !== Resolver::STATUS_OK) {
+            return [$record, $status];
+        }
+        $member = Member::get()->filter('ResetTokenID', $record->ID)->first();
+        if (!$member) {
+            return [$record, Resolver::STATUS_INVALID];
+        }
+        return [$record, Resolver::STATUS_OK];
     }
 
     /**
