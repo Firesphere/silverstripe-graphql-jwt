@@ -4,6 +4,12 @@ namespace Firesphere\GraphQLJWT\Helpers;
 
 use Firesphere\GraphQLJWT\Resolvers\Resolver;
 
+
+/**
+ * Validates an AnonymousToken for graphql responses
+ *
+ * @mixin Extensible
+ */
 trait AnonymousTokenGenerator
 {
   /**
