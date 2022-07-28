@@ -10,6 +10,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use Exception;
 use Firesphere\GraphQLJWT\Extensions\MemberExtension;
+use Firesphere\GraphQLJWT\Helpers\ErrorMessageGenerator;
 use Firesphere\GraphQLJWT\Helpers\MemberTokenGenerator;
 use Firesphere\GraphQLJWT\Model\JWTRecord;
 use Firesphere\GraphQLJWT\Resolvers\Resolver;
@@ -242,7 +243,7 @@ class JWTAuthenticator extends MemberAuthenticator
 
         // Add errors to result
         $result->addError(
-            $this->getErrorMessage($status),
+            ErrorMessageGenerator::getErrorMessage($status),
             ValidationResult::TYPE_ERROR,
             $status
         );
