@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Firesphere\GraphQLJWT\Model;
 
@@ -18,6 +20,7 @@ class JWTRecord extends DataObject
     private static $db = [
         'UID'       => 'Varchar(255)',
         'UserAgent' => 'Text',
+        'isAnonymous' => 'Boolean',
     ];
 
     private static $has_one = [
