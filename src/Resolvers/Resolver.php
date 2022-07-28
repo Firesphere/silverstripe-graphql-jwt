@@ -234,6 +234,8 @@ class Resolver
         $result = $member->changePassword($newPassword);
 
         if ($result->isValid()) {
+            $member->ResetTokenID = null;
+            $member->write();
             return static::generateResetPasswordResponse(self::STATUS_OK);
         }
 
