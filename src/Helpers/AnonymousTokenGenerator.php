@@ -1,5 +1,7 @@
 <?php
 
+namespace Firesphere\GraphQLJWT\Helpers;
+
 use Firesphere\GraphQLJWT\Resolvers\Resolver;
 
 trait AnonymousTokenGenerator

@@ -1,6 +1,9 @@
 <?php
 
+namespace Firesphere\GraphQLJWT\Helpers;
+
 use Firesphere\GraphQLJWT\Resolvers\Resolver;
+use InvalidArgumentException;
 
 class ErrorMessageGenerator
 {
@@ -22,6 +25,8 @@ class ErrorMessageGenerator
         return _t('JWT.STATUS_INVALID', 'Invalid token provided');
       case Resolver::STATUS_BAD_LOGIN:
         return _t('JWT.STATUS_BAD_LOGIN', 'Sorry your email and password combination is rejected');
+      case Resolver::STATUS_BAD_REQUEST:
+        return _t('JWT.STATUS_BAD_REQUEST', 'Invalid request');
       case Resolver::STATUS_OK:
         return _t('JWT.STATUS_OK', 'Token is ok');
       default:

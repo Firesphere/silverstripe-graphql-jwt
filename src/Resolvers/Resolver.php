@@ -3,7 +3,6 @@
 
 namespace Firesphere\GraphQLJWT\Resolvers;
 
-
 use Firesphere\GraphQLJWT\Authentication\CustomAuthenticatorRegistry;
 use Firesphere\GraphQLJWT\Authentication\JWTAuthenticator;
 use Firesphere\GraphQLJWT\Extensions\MemberExtension;
@@ -18,6 +17,8 @@ use SilverStripe\Core\Injector\Injector;
 use OutOfBoundsException;
 use BadMethodCallException;
 use Exception;
+use Firesphere\GraphQLJWT\Helpers\AnonymousTokenGenerator;
+use Firesphere\GraphQLJWT\Helpers\RequestPasswordResetResponseGenerator;
 use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Security\Authenticator;
 use SilverStripe\Security\Member;
@@ -30,7 +31,9 @@ use Generator;
 class Resolver
 {
     use MemberTokenGenerator;
+    use AnonymousTokenGenerator;
     use HeaderExtractor;
+    use RequestPasswordResetResponseGenerator;
 
     /**
      * Valid token
