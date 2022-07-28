@@ -2,12 +2,8 @@
 
 namespace Firesphere\GraphQLJWT\Helpers;
 
-
-
-
 trait RequestPasswordResetResponseGenerator
 {
-
   public static function generateRequestPasswordResponse($status): array
   {
     return [
