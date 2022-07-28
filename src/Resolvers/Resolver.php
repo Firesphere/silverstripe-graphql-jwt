@@ -25,6 +25,7 @@ use SilverStripe\Security\Authenticator;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
 use Generator;
+use SilverStripe\Core\Config\Configurable;
 
 /**
  * @todo Enum types should allow mapping to these constants (see enums.yml, duplicate code)
@@ -36,6 +37,7 @@ class Resolver
     use HeaderExtractor;
     use RequestPasswordResetResponseGenerator;
     use ResetPasswordResponseGenerator;
+    use Configurable;
 
     /**
      * Valid token
@@ -198,7 +200,14 @@ class Resolver
 
         // Create new reset token from this member
         $authenticator = Injector::inst()->get(JWTAuthenticator::class);
-        $authenticator->generateResetToken($request, $member);
+        $token = $authenticator->generateResetToken($request, $member);
+
+        // Add mailer class to config to send emails
+        $mailerClass = static::config()->get('mailer_class');
+        if ($mailerClass) {
+            $mailer = Injector::inst()->get($mailerClass);
+            $mailer->sendResetPasswordEmail($member, $token, $request);
+        }
 
         return static::generateRequestPasswordResponse(self::STATUS_OK);
     }
