@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Firesphere\GraphQLJWT\Helpers;
 
-use ErrorMessageGenerator;
 use Firesphere\GraphQLJWT\Resolvers\Resolver;
 use InvalidArgumentException;
 use SilverStripe\Core\Extensible;
