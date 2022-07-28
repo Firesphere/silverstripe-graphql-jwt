@@ -429,7 +429,7 @@ class JWTAuthenticator extends MemberAuthenticator
         }
 
         // Check if token is reset-token
-        if ($record->isAnonymous !== JWTRecord::TYPE_ANONYMOUS) {
+        if ($record->Type !== JWTRecord::TYPE_ANONYMOUS) {
             return [$record, Resolver::STATUS_INVALID];
         }
 
