@@ -86,12 +86,12 @@ class Resolver
      * @return mixed
      * @throws \Exception
      */
-    public static function resolveValidateResetToken()
+    public static function resolveValidateResetToken($object, array $args)
     {
         /** @var JWTAuthenticator $authenticator */
         $authenticator = Injector::inst()->get(JWTAuthenticator::class);
         $request = Controller::curr()->getRequest();
-        $token = static::getAuthorizationHeader($request);
+        $token = isset($args['token']) ? $args['token'] : null;
 
         /** @var JWTRecord $record */
         list(, $status) = $authenticator->validateResetToken($token, $request);
