@@ -20,3 +20,8 @@ RequestResetPasswordSuccess:
   fields:
     successful: Boolean
     message: String
+
+ResetPasswordResponse:
+  fields:
+    successful: Boolean
+    message: String

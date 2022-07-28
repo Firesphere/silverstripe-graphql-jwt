@@ -19,6 +19,7 @@ use BadMethodCallException;
 use Exception;
 use Firesphere\GraphQLJWT\Helpers\AnonymousTokenGenerator;
 use Firesphere\GraphQLJWT\Helpers\RequestPasswordResetResponseGenerator;
+use Firesphere\GraphQLJWT\Helpers\ResetPasswordResponseGenerator;
 use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Security\Authenticator;
 use SilverStripe\Security\Member;
@@ -34,6 +35,7 @@ class Resolver
     use AnonymousTokenGenerator;
     use HeaderExtractor;
     use RequestPasswordResetResponseGenerator;
+    use ResetPasswordResponseGenerator;
 
     /**
      * Valid token
@@ -191,9 +193,43 @@ class Resolver
 
         // Create new reset token from this member
         $authenticator = Injector::inst()->get(JWTAuthenticator::class);
-        $token = $authenticator->generateResetToken($request, $member);
+        $authenticator->generateResetToken($request, $member);
 
         return static::generateRequestPasswordResponse(self::STATUS_OK);
+    }
+
+    public static function resolveResetPassword($object, array $args)
+    {
+        $token = isset($args['token']) ? $args['token'] : null;
+        $newPassword = isset($args['password']) ? $args['password'] : null;
+        $passwordConfirm = isset($args['passwordConfirm']) ? $args['passwordConfirm'] : null;
+        $authenticator = Injector::inst()->get(JWTAuthenticator::class);
+        $request = Controller::curr()->getRequest();
+
+        if (!$token || !$newPassword || !$passwordConfirm) {
+            return static::generateResetPasswordResponse(self::STATUS_BAD_REQUEST);
+        }
+
+        if ($newPassword !== $passwordConfirm) {
+            return static::generateResetPasswordResponse(self::STATUS_BAD_REQUEST);
+        }
+
+        list($record, $status) = $authenticator->validateResetToken($token, $request);
+
+        if ($status !== self::STATUS_OK) {
+            return static::generateResetPasswordResponse($status);
+        }
+
+        $member = Member::get()->filter('ResetTokenID', $record->ID)->first();
+
+        if (!$member) {
+            return static::generateResetPasswordResponse(self::STATUS_INVALID);
+        }
+
+        $success = $member->changePassword($newPassword);
+        if (!$success) {
+            return static::generateResetPasswordResponse(self::STATUS_OK);
+        }
     }
 
 

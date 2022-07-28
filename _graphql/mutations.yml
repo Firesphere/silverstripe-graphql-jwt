@@ -11,3 +11,7 @@ logOut:
 "requestResetPassword(email: String!)":
   type: RequestResetPasswordSuccess
   description: Request a password reset for given email
+
+"resetPassword(token: String!, password: String!, passwordConfirm: String!)":
+  type: ResetPasswordResponse
+  description: Request a password reset for given email
