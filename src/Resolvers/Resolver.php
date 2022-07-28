@@ -178,7 +178,8 @@ class Resolver
         // Authenticate this member
         $request = Controller::curr()->getRequest();
 
-        $email = isset($args['email']) ?? null;
+        $email = isset($args['email']) ? $args['email'] : null;
+
         if (!$email) {
             return static::generateRequestPasswordResponse(self::STATUS_OK);
         }
