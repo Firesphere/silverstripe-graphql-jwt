@@ -234,12 +234,22 @@ class Resolver
         $result = $member->changePassword($newPassword);
 
         if ($result->isValid()) {
-            $member->ResetTokenID = null;
-            $member->write();
+            static::afterResetPassword($member);
             return static::generateResetPasswordResponse(self::STATUS_OK);
         }
 
         return static::generateInvalidPasswordResponse(self::STATUS_INVALID_PASSWORD, $result->getMessages());
+    }
+
+    protected static function afterResetPassword(Member $member)
+    {
+        $existingLogins = JWTRecord::get('MemberID', $member->ID);
+        foreach ($existingLogins as $record) {
+            $record->delete();
+        }
+
+        $member->ResetTokenID = null;
+        $member->write();
     }
 
 

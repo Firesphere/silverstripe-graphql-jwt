@@ -5,6 +5,12 @@ namespace Firesphere\GraphQLJWT\Helpers;
 use Firesphere\GraphQLJWT\Resolvers\Resolver;
 use InvalidArgumentException;
 
+
+/**
+ * Generates Error messages for responses
+ *
+ * @mixin Extensible
+ */
 class ErrorMessageGenerator
 {
   /**

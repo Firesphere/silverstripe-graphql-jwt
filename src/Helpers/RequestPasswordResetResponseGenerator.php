@@ -4,6 +4,7 @@ namespace Firesphere\GraphQLJWT\Helpers;
 
 
 
+
 trait RequestPasswordResetResponseGenerator
 {
 
