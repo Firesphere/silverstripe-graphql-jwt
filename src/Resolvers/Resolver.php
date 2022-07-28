@@ -170,7 +170,7 @@ class Resolver
      * @return array
      * @throws NotFoundExceptionInterface
      */
-    public static function resolveRequestPasswordReset($object, array $args): array
+    public static function resolveRequestResetPassword($object, array $args): array
     {
         // This method should not give any information on wether the email was sent or not
         // only inform if something failed on the server side.
