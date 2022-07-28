@@ -6,8 +6,6 @@ use Firesphere\GraphQLJWT\Resolvers\Resolver;
 
 trait AnonymousTokenGenerator
 {
-  use ErrorMessageGenerator;
-
   /**
    * Generate MemberToken response
    *
