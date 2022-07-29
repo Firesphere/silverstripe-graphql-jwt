@@ -92,6 +92,13 @@ class JWTAuthenticator extends MemberAuthenticator
      */
     private static $nbf_expiration = 3600;
 
+    /**
+     * Expires after 1 hour
+     *
+     * @config
+     * @var int
+     */
+    private static $nbf_signup_expiration = 3600;
 
     /**
      * Expires after 1 hour
@@ -363,6 +370,60 @@ class JWTAuthenticator extends MemberAuthenticator
     }
 
     /**
+     * Generate a new user signup JWT token for a given request, and optional (if anonymous_allowed) user
+     *
+     * @param HTTPRequest $request
+     * @param string $email
+     * @return Token
+     * @throws ValidationException
+     * @throws Exception
+     */
+    public function generateSignupToken(HTTPRequest $request, Member $member): Token
+    {
+        $config = static::config();
+        $uniqueID = uniqid($this->getEnv('JWT_PREFIX', ''), true);
+
+        // Create new record
+        $record = new JWTRecord();
+        $record->UID = $uniqueID;
+        $record->UserAgent = $request->getHeader('User-Agent');
+        $record->Type = JWTRecord::TYPE_ANONYMOUS;
+
+        if (!$record->isInDB()) {
+            $record->write();
+        }
+
+        $member->SignupToken = $record;
+        $member->write();
+
+        // Get builder for this record
+        $builder = $this->config->builder(ChainedFormatter::withUnixTimestampDates());
+
+        foreach ($this->getAllowedDomains() as $domain) {
+            $builder = $builder->permittedFor($domain);
+        }
+
+        $token = $builder
+            // Configures the issuer (iss claim)
+            ->issuedBy($request->getHeader('Origin'))
+            // Configures the id (jti claim), replicating as a header item
+            ->identifiedBy($uniqueID)->withHeader('jti', $uniqueID)
+            // Configures the time that the token was issue (iat claim)
+            ->issuedAt($this->getNow())
+            // Configures the time that the token can be used (nbf claim)
+            ->canOnlyBeUsedAfter($this->getNowPlus($config->get('nbf_time')))
+            // Configures the expiration time of the token (nbf claim)
+            ->expiresAt($this->getNowPlus($config->get('nbf_signup_expiration')))
+            // Configures a new claim, called "rid"
+            ->withClaim('rid', $record->ID)
+            // Sign the key with the Signer's key
+            ->getToken($this->config->signer(), $this->config->signingKey());
+
+        // Return the token
+        return $token;
+    }
+
+    /**
      * @param string $token
      * @param HTTPRequest $request
      * @return array|null Array with JWTRecord and int status (STATUS_*)
@@ -458,6 +519,20 @@ class JWTAuthenticator extends MemberAuthenticator
             return [$record, $status];
         }
         $member = Member::get()->filter('ResetTokenID', $record->ID)->first();
+        if (!$member) {
+            return [$record, Resolver::STATUS_INVALID];
+        }
+        return [$record, Resolver::STATUS_OK];
+    }
+
+    public function validateSignupToken(?string $token, HTTPRequest $request) : array
+    {
+        list($record, $status) = $this->validateAnonymousToken($token, $request);
+
+        if ($status !== Resolver::STATUS_OK) {
+            return [$record, $status];
+        }
+        $member = Member::get()->filter('SignupTokenID', $record->ID)->first();
         if (!$member) {
             return [$record, Resolver::STATUS_INVALID];
         }

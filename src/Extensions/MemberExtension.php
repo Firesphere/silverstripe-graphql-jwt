@@ -28,8 +28,13 @@ class MemberExtension extends DataExtension
      */
     private static $jwt_subject_fields = [];
 
+    private static $db = [
+        'isActivated' => 'Boolean',
+    ];
+
     private static $has_one = [
         'ResetToken' => JWTRecord::class,
+        'SignupToken' => JWTRecord::class,
     ];
 
     /**
@@ -43,6 +48,8 @@ class MemberExtension extends DataExtension
     public function updateCMSFields(FieldList $fields)
     {
         $fields->removeByName('AuthTokens');
+        $fields->removeByName('ResetToken');
+        $fields->removeByName('SignupToken');
     }
 
     /**
@@ -81,5 +88,16 @@ class MemberExtension extends DataExtension
             $token->delete();
         }
         return $this->owner;
+    }
+
+    public function Activate(){
+        $this->owner->isActivated = true;
+        $this->owner->SignupTokenID = null;
+        $this->owner->write();
+    }
+
+    public function deActivate(){
+        $this->owner->isActivated = false;
+        $this->owner->write();
     }
 }

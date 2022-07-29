@@ -9,7 +9,6 @@ use Firesphere\GraphQLJWT\Extensions\MemberExtension;
 use Firesphere\GraphQLJWT\Helpers\HeaderExtractor;
 use Firesphere\GraphQLJWT\Helpers\MemberTokenGenerator;
 use Firesphere\GraphQLJWT\Model\JWTRecord;
-use GraphQL\Type\Definition\ResolveInfo;
 use Psr\Container\NotFoundExceptionInterface;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\HTTPRequest;
@@ -19,6 +18,8 @@ use BadMethodCallException;
 use Exception;
 use Firesphere\GraphQLJWT\Helpers\AnonymousTokenGenerator;
 use Firesphere\GraphQLJWT\Helpers\CreateTokenResponseGenerator;
+use Firesphere\GraphQLJWT\Helpers\CreateAccountResponseGenerator;
+use Firesphere\GraphQLJWT\Helpers\ErrorMessageGenerator;
 use Firesphere\GraphQLJWT\Helpers\RequestPasswordResetResponseGenerator;
 use Firesphere\GraphQLJWT\Helpers\ResetPasswordResponseGenerator;
 use SilverStripe\ORM\ValidationResult;
@@ -39,6 +40,7 @@ class Resolver
     use RequestPasswordResetResponseGenerator;
     use ResetPasswordResponseGenerator;
     use CreateTokenResponseGenerator;
+    use CreateAccountResponseGenerator;
     use Configurable;
 
     /**
@@ -77,6 +79,16 @@ class Resolver
     const STATUS_INVALID_PASSWORD = "INVALID_PASSWORD";
 
     /**
+     * Provided new passwords didn't match
+     */
+    const STATUS_PASSWORD_MISSMATCH = "PASSWORD_MISSMATCH";
+
+    /**
+     * 
+     */
+    const STATUS_ALREADY_REGISTERED = "ALREADY_REGISTERED";
+
+    /**
      * @return mixed
      * @throws \Exception
      */
@@ -109,6 +121,74 @@ class Resolver
         return static::generateAnonymousResponse($status, $token);
     }
 
+    public static function resolveActivateAccount($object, array $args)
+    {
+        /** @var JWTAuthenticator $authenticator */
+        $authenticator = Injector::inst()->get(JWTAuthenticator::class);
+        $request = Controller::curr()->getRequest();
+        $token = isset($args['token']) ? $args['token'] : null;
+
+        /** @var JWTRecord $record */
+        list($record, $status) = $authenticator->validateSignupToken($token, $request);
+        if(!$status === self::STATUS_OK) {
+            return static::generateResponse($status,null,  $token);
+        } 
+        $member = Member::get()->filter('SignupTokenID', $record->ID)->first();
+        if(!$member){
+            return static::generateResponse(self::STATUS_INVALID, null ,$token);
+        }
+
+        $member->Activate();
+
+        $memberToken = $authenticator->generateToken($request, $member)->toString();
+
+        return static::generateResponse(self::STATUS_OK, $member, $memberToken);
+    }
+
+    public static function resolveCreateAccount($object, array $args){
+        $email = isset($args['email']) ? $args['email'] : null;
+        $password = isset($args['password']) ? $args['password'] : null;
+        $passwordConfirm = isset($args['passwordConfirm']) ? $args['passwordConfirm'] : null;
+        $authenticator = Injector::inst()->get(JWTAuthenticator::class);
+        $request = Controller::curr()->getRequest();
+
+        if (!$email || !$password || !$passwordConfirm) {
+            return static::generateCreateAccountResponse(self::STATUS_BAD_REQUEST);
+        }
+
+        if ($password !== $passwordConfirm) {
+            return static::generateCreateAccountResponse(self::STATUS_PASSWORD_MISSMATCH, [ErrorMessageGenerator::getErrorMessage(self::STATUS_PASSWORD_MISSMATCH)]);
+        }
+
+        $member = Member::get()->filter('Email', $email)->first();
+        if($member){
+            return static::generateCreateAccountResponse(self::STATUS_ALREADY_REGISTERED, [ErrorMessageGenerator::getErrorMessage(self::STATUS_ALREADY_REGISTERED)]);
+        }
+
+        $member = Member::create();
+        $member->Email = $email;
+        $result = $member->changePassword($password);
+        if (!$result->isValid()) {
+            return static::generateCreateAccountResponse(self::STATUS_BAD_REQUEST, $result->getMessages());
+        }
+        $member->write();
+
+        $token = $authenticator->generateSignupToken($request,$member);
+        // Add mailer class to config to send emails
+        $mailerClass = static::config()->get('mailer_class');
+        if ($mailerClass) {
+            $mailer = Injector::inst()->get($mailerClass);
+            $mailer->sendActivationEmail($member, $token, $request);
+        }
+        
+        return static::generateCreateAccountResponse(self::STATUS_OK);
+
+    }
+
+    protected static function onAfterCreateMember(Member $member)
+    {
+        
+    }
 
     /**
      * @return array
@@ -227,7 +307,7 @@ class Resolver
         }
 
         if ($newPassword !== $passwordConfirm) {
-            return static::generateResetPasswordResponse(self::STATUS_BAD_REQUEST);
+            return static::generateResetPasswordResponse(self::STATUS_PASSWORD_MISSMATCH);
         }
 
         list($record, $status) = $authenticator->validateResetToken($token, $request);
@@ -254,11 +334,7 @@ class Resolver
 
     protected static function afterResetPassword(Member $member)
     {
-        $existingLogins = JWTRecord::get()->filter('MemberID', $member->ID);
-        foreach ($existingLogins as $record) {
-            $record->delete();
-        }
-
+        $member->destroyAuthTokens();
         $member->ResetTokenID = null;
         $member->write();
     }

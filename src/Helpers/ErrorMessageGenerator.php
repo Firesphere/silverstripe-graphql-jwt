@@ -33,6 +33,10 @@ class ErrorMessageGenerator
         return _t('JWT.STATUS_BAD_LOGIN', 'Sorry your email and password combination is rejected');
       case Resolver::STATUS_BAD_REQUEST:
         return _t('JWT.STATUS_BAD_REQUEST', 'Invalid request');
+      case Resolver::STATUS_PASSWORD_MISSMATCH:
+        return _t('JWT.STATUS_PASSWORD_MISSMATCH', 'Passwords do not match');
+      case Resolver::STATUS_ALREADY_REGISTERED:
+        return _t('JWT.STATUS_ALREADY_REGISTERED', 'Email address is already registered');
       case Resolver::STATUS_OK:
         return _t('JWT.STATUS_OK', 'Token is ok');
       default:
@@ -51,6 +55,8 @@ class ErrorMessageGenerator
         return _t('JWT.STATUS_INVALID', 'Invalid token provided');
       case Resolver::STATUS_BAD_REQUEST:
         return _t('JWT.STATUS_BAD_REQUEST', 'Invalid request');
+      case Resolver::STATUS_PASSWORD_MISSMATCH:
+        return _t('JWT.STATUS_PASSWORD_MISSMATCH', 'Passwords do not match');
       case Resolver::STATUS_OK:
         return _t('JWT.STATUS_OK', 'Password is reset');
       default:
@@ -68,5 +74,9 @@ class ErrorMessageGenerator
       default:
         throw new InvalidArgumentException("Invalid status");
     }
+  }
+
+  public static function getCreateAccountMessage($status){
+
   }
 }
