@@ -1,3 +1,7 @@
 validateToken:
   description: Validates a given token from the Bearer header
   type: MemberToken
+
+"validateResetToken(token: String!)":
+  description: Validates a given reset token from the Bearer header
+  type: AnonymousToken

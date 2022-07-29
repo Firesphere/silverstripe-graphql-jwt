@@ -3,7 +3,6 @@
 
 namespace Firesphere\GraphQLJWT\Resolvers;
 
-
 use Firesphere\GraphQLJWT\Authentication\CustomAuthenticatorRegistry;
 use Firesphere\GraphQLJWT\Authentication\JWTAuthenticator;
 use Firesphere\GraphQLJWT\Extensions\MemberExtension;
@@ -18,11 +17,15 @@ use SilverStripe\Core\Injector\Injector;
 use OutOfBoundsException;
 use BadMethodCallException;
 use Exception;
+use Firesphere\GraphQLJWT\Helpers\AnonymousTokenGenerator;
+use Firesphere\GraphQLJWT\Helpers\RequestPasswordResetResponseGenerator;
+use Firesphere\GraphQLJWT\Helpers\ResetPasswordResponseGenerator;
 use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Security\Authenticator;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
 use Generator;
+use SilverStripe\Core\Config\Configurable;
 
 /**
  * @todo Enum types should allow mapping to these constants (see enums.yml, duplicate code)
@@ -30,7 +33,11 @@ use Generator;
 class Resolver
 {
     use MemberTokenGenerator;
+    use AnonymousTokenGenerator;
     use HeaderExtractor;
+    use RequestPasswordResetResponseGenerator;
+    use ResetPasswordResponseGenerator;
+    use Configurable;
 
     /**
      * Valid token
@@ -57,6 +64,15 @@ class Resolver
      */
     const STATUS_BAD_LOGIN = 'BAD_LOGIN';
 
+    /**
+     * Provided user email were incorrect
+     */
+    const STATUS_BAD_REQUEST = 'BAD_REQUEST';
+
+    /**
+     * Provided new password didn't validate
+     */
+    const STATUS_INVALID_PASSWORD = "INVALID_PASSWORD";
 
     /**
      * @return mixed
@@ -74,6 +90,23 @@ class Resolver
         $member = $status === self::STATUS_OK ? $record->Member() : null;
         return static::generateResponse($status, $member, $token);
     }
+
+    /**
+     * @return mixed
+     * @throws \Exception
+     */
+    public static function resolveValidateResetToken($object, array $args)
+    {
+        /** @var JWTAuthenticator $authenticator */
+        $authenticator = Injector::inst()->get(JWTAuthenticator::class);
+        $request = Controller::curr()->getRequest();
+        $token = isset($args['token']) ? $args['token'] : null;
+
+        /** @var JWTRecord $record */
+        list(, $status) = $authenticator->validateResetToken($token, $request);
+        return static::generateAnonymousResponse($status, $token);
+    }
+
 
     /**
      * @return array
@@ -140,6 +173,101 @@ class Resolver
         return static::generateResponse(self::STATUS_OK, $member, $token->toString());
     }
 
+    /**
+     * @param mixed $object
+     * @param array $args
+     * @return array
+     * @throws NotFoundExceptionInterface
+     */
+    public static function resolveRequestResetPassword($object, array $args): array
+    {
+        // This method should not give any information on wether the email was sent or not
+        // only inform if something failed on the server side.
+
+        // Authenticate this member
+        $request = Controller::curr()->getRequest();
+
+        $email = isset($args['email']) ? $args['email'] : null;
+
+        if (!$email) {
+            return static::generateRequestPasswordResponse(self::STATUS_OK);
+        }
+
+        $member = Member::get()->filter('Email', $email)->first();
+        if (!$member) {
+            return static::generateRequestPasswordResponse(self::STATUS_OK);
+        }
+
+        // Create new reset token from this member
+        $authenticator = Injector::inst()->get(JWTAuthenticator::class);
+        $token = $authenticator->generateResetToken($request, $member);
+
+        // Add mailer class to config to send emails
+        $mailerClass = static::config()->get('mailer_class');
+        if ($mailerClass) {
+            $mailer = Injector::inst()->get($mailerClass);
+            $mailer->sendResetPasswordEmail($member, $token, $request);
+        }
+
+        return static::generateRequestPasswordResponse(self::STATUS_OK);
+    }
+
+    public static function resolveResetPassword($object, array $args)
+    {
+        $token = isset($args['token']) ? $args['token'] : null;
+        $newPassword = isset($args['password']) ? $args['password'] : null;
+        $passwordConfirm = isset($args['passwordConfirm']) ? $args['passwordConfirm'] : null;
+        $authenticator = Injector::inst()->get(JWTAuthenticator::class);
+        $request = Controller::curr()->getRequest();
+
+        if (!$token || !$newPassword || !$passwordConfirm) {
+            return static::generateResetPasswordResponse(self::STATUS_BAD_REQUEST);
+        }
+
+        if ($newPassword !== $passwordConfirm) {
+            return static::generateResetPasswordResponse(self::STATUS_BAD_REQUEST);
+        }
+
+        list($record, $status) = $authenticator->validateResetToken($token, $request);
+
+        if ($status !== self::STATUS_OK) {
+            return static::generateResetPasswordResponse($status);
+        }
+
+        $member = Member::get()->filter('ResetTokenID', $record->ID)->first();
+
+        if (!$member) {
+            return static::generateResetPasswordResponse(self::STATUS_INVALID);
+        }
+
+        $result = $member->changePassword($newPassword);
+
+        if ($result->isValid()) {
+            static::afterResetPassword($member);
+            return static::generateResetPasswordResponse(self::STATUS_OK);
+        }
+
+        return static::generateInvalidPasswordResponse(self::STATUS_INVALID_PASSWORD, $result->getMessages());
+    }
+
+    protected static function afterResetPassword(Member $member)
+    {
+        $existingLogins = JWTRecord::get('MemberID', $member->ID);
+        foreach ($existingLogins as $record) {
+            $record->delete();
+        }
+
+        $member->ResetTokenID = null;
+        $member->write();
+    }
+
+
+    /**
+     * @param mixed $object
+     * @param array $args
+     * @return array
+     * @throws NotFoundExceptionInterface
+     */
     public static function resolveLogOut($object, array $args): array
     {
         /** @var JWTAuthenticator $authenticator */
@@ -187,6 +315,7 @@ class Resolver
             'Email' => $args['email'],
             'Password' => $args['password'] ?? null,
         ];
+
         // Login with authenticators
         $result = ValidationResult::create();
         foreach (static::getLoginAuthenticators() as $authenticator) {

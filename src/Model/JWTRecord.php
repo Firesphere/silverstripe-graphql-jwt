@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Firesphere\GraphQLJWT\Model;
 
@@ -13,11 +15,17 @@ use SilverStripe\Security\Member;
  */
 class JWTRecord extends DataObject
 {
+
+    const TYPE_AUTH = 'auth';
+
+    const TYPE_ANONYMOUS = 'anonymous';
+
     private static $table_name = 'JWTRecord';
 
     private static $db = [
         'UID'       => 'Varchar(255)',
         'UserAgent' => 'Text',
+        'Type' => 'Varchar(255)',
     ];
 
     private static $has_one = [

@@ -7,3 +7,21 @@ MemberToken:
     status: TokenStatus
     code: Int
     message: String
+
+AnonymousToken:
+  fields:
+    valid: Boolean
+    token: String
+    status: TokenStatus
+    code: Int
+    message: String
+
+RequestResetPasswordSuccess:
+  fields:
+    successful: Boolean
+    message: String
+
+ResetPasswordResponse:
+  fields:
+    successful: Boolean
+    message: String

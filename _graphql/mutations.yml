@@ -1,9 +1,17 @@
 refreshToken:
   type: MemberToken
   description: Refreshes a JWT token for a valid user. To be done
-'createToken(email: String!, password: String)':
+"createToken(email: String!, password: String)":
   type: MemberToken
   description: Creates a JWT token for a valid user
 logOut:
   type: MemberToken
   description: Destroy the current token
+
+"requestResetPassword(email: String!)":
+  type: RequestResetPasswordSuccess
+  description: Request a password reset for given email
+
+"resetPassword(token: String!, password: String!, passwordConfirm: String!)":
+  type: ResetPasswordResponse
+  description: Request a password reset for given email
