@@ -522,7 +522,7 @@ class JWTAuthenticator extends MemberAuthenticator
     protected function canTokenBeRenewed(UnencryptedToken $parsedToken): bool
     {
         $renewBefore = $parsedToken->claims()->get('rexp');
-        return strtotime($renewBefore->date) > $this->getNow()->getTimestamp();
+        return strtotime($renewBefore['date']) > $this->getNow()->getTimestamp();
     }
 
     /**

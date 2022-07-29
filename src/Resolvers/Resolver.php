@@ -18,6 +18,7 @@ use OutOfBoundsException;
 use BadMethodCallException;
 use Exception;
 use Firesphere\GraphQLJWT\Helpers\AnonymousTokenGenerator;
+use Firesphere\GraphQLJWT\Helpers\CreateTokenResponseGenerator;
 use Firesphere\GraphQLJWT\Helpers\RequestPasswordResetResponseGenerator;
 use Firesphere\GraphQLJWT\Helpers\ResetPasswordResponseGenerator;
 use SilverStripe\ORM\ValidationResult;
@@ -37,6 +38,7 @@ class Resolver
     use HeaderExtractor;
     use RequestPasswordResetResponseGenerator;
     use ResetPasswordResponseGenerator;
+    use CreateTokenResponseGenerator;
     use Configurable;
 
     /**
@@ -160,11 +162,11 @@ class Resolver
     {
         // Authenticate this member
         $request = Controller::curr()->getRequest();
-        $member = static::getAuthenticatedMember($args, $request);
+        [$member, $validationResult] = static::getAuthenticatedMember($args, $request);
 
         // Handle unauthenticated
         if (!$member) {
-            return static::generateResponse(self::STATUS_BAD_LOGIN);
+            return static::generateCreateTokenResponse($validationResult);
         }
 
         // Create new token from this member
@@ -308,7 +310,7 @@ class Resolver
      * @param HTTPRequest $request
      * @return Member|MemberExtension
      */
-    protected static function getAuthenticatedMember(array $args, HTTPRequest $request): ?Member
+    protected static function getAuthenticatedMember(array $args, HTTPRequest $request): array
     {
         // Normalise the casing for the authenticator
         $data = [
@@ -317,14 +319,14 @@ class Resolver
         ];
 
         // Login with authenticators
+        $result = ValidationResult::create();
         foreach (static::getLoginAuthenticators() as $authenticator) {
-            $result = ValidationResult::create();
             $member = $authenticator->authenticate($data, $request, $result);
             if ($member && $result->isValid()) {
-                return $member;
+                return [$member, null];
             }
         }
 
-        return null;
+        return [null, $result];
     }
 }
