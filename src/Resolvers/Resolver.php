@@ -252,7 +252,7 @@ class Resolver
 
     protected static function afterResetPassword(Member $member)
     {
-        $existingLogins = JWTRecord::get('MemberID', $member->ID);
+        $existingLogins = JWTRecord::get()->filter('MemberID', $member->ID);
         foreach ($existingLogins as $record) {
             $record->delete();
         }
