@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 namespace Firesphere\GraphQLJWT\Authentication;
+// This is needed since a deeply buried method in jwt token library uses this timezone
+date_default_timezone_set('Etc/GMT+0');
 
 use BadMethodCallException;
 use DateInterval;
