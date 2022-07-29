@@ -18,6 +18,7 @@ use OutOfBoundsException;
 use BadMethodCallException;
 use Exception;
 use Firesphere\GraphQLJWT\Helpers\AnonymousTokenGenerator;
+use Firesphere\GraphQLJWT\Helpers\CreateTokenResponseGenerator;
 use Firesphere\GraphQLJWT\Helpers\RequestPasswordResetResponseGenerator;
 use Firesphere\GraphQLJWT\Helpers\ResetPasswordResponseGenerator;
 use SilverStripe\ORM\ValidationResult;
@@ -37,6 +38,7 @@ class Resolver
     use HeaderExtractor;
     use RequestPasswordResetResponseGenerator;
     use ResetPasswordResponseGenerator;
+    use CreateTokenResponseGenerator;
     use Configurable;
 
     /**
@@ -164,7 +166,7 @@ class Resolver
 
         // Handle unauthenticated
         if (!$member) {
-            return static::generateResponse(self::STATUS_BAD_LOGIN);
+            return static::generateCreateTokenResponse($validationResult);
         }
 
         // Create new token from this member
