@@ -127,7 +127,7 @@ class Resolver
     {
         // Authenticate this member
         $request = Controller::curr()->getRequest();
-        $member = static::getAuthenticatedMember($args, $request);
+        [$member, $validationResult] = static::getAuthenticatedMember($args, $request);
 
         // Handle unauthenticated
         if (!$member) {
@@ -180,7 +180,7 @@ class Resolver
      * @param HTTPRequest $request
      * @return Member|MemberExtension
      */
-    protected static function getAuthenticatedMember(array $args, HTTPRequest $request): ?Member
+    protected static function getAuthenticatedMember(array $args, HTTPRequest $request): array
     {
         // Normalise the casing for the authenticator
         $data = [
@@ -188,14 +188,14 @@ class Resolver
             'Password' => $args['password'] ?? null,
         ];
         // Login with authenticators
+        $result = ValidationResult::create();
         foreach (static::getLoginAuthenticators() as $authenticator) {
-            $result = ValidationResult::create();
             $member = $authenticator->authenticate($data, $request, $result);
             if ($member && $result->isValid()) {
-                return $member;
+                return [$member, null];
             }
         }
 
-        return null;
+        return [null, $result];
     }
 }
