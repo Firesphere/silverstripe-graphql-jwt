@@ -44,10 +44,14 @@ class ErrorMessageGenerator
         return _t('JWT.RESULT_PASSWORD_MISSMATCH', 'Passwords do not match');
       case Resolver::RESULT_BAD_LOGIN:
         return _t('JWT.RESULT_BAD_LOGIN', 'Email address or password is incorrect');
+      case Resolver::RESULT_INVALID_PASSWORD;
+        return _t('JWT.RESULT_INVALID_PASSWORD', 'New password is invalid');
       case Resolver::RESULT_BAD_REQUEST:
         return _t('JWT.RESULT_BAD_REQUEST', 'Something went wrong, please try again later.');
       case Resolver::RESULT_OK:
         return _t('JWT.RESULT_OK', 'Success');
+      case Resolver::RESULT_INVALID_TOKEN:
+        return _t('JWT.RESULT_INVALID_TOKEN', 'Link is invalid, either it has expired or a new one has been sent to you.');
       default:
         throw new InvalidArgumentException("Invalid result");
     }

@@ -88,11 +88,6 @@ class Resolver
     const RESULT_ALREADY_REGISTERED = "ALREADY_REGISTERED";
 
     /**
-     * Return when a given password was able to be applied to the member
-     */
-    const RESULT_BAD_PASSWORD = "BAD_PASSWORD";
-
-    /**
      * Return when trying to reset a password, but the token  was either invalid, expired, already used or changed.
      */
     const RESULT_INVALID_TOKEN= "INVALID_TOKEN";
@@ -178,7 +173,7 @@ class Resolver
         $member->Email = $email;
         $result = $member->changePassword($password);
         if (!$result->isValid()) {
-            return static::generateResultResponse(self::RESULT_BAD_PASSWORD, $result->getMessages());
+            return static::generateResultResponse(self::RESULT_INVALID_PASSWORD, $result->getMessages());
         }
         $member->write();
 
