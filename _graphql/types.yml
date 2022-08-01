@@ -19,4 +19,4 @@ AnonymousToken:
 MutationResult: 
   fields: 
     result: String
-    message: String
+    message: '[String]'
