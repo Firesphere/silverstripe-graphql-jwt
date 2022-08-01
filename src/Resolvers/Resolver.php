@@ -59,6 +59,11 @@ class Resolver
     const STATUS_DEAD = 'DEAD';
 
     /**
+     * Inactivated users cannot login
+     */
+    const STATUS_INACTIVATED_USER = 'INACTIVE_USER';
+
+    /**
      * Return when a hidden/anonymous mutation result was ok
      */
     const RESULT_OK = 'OK';
@@ -90,7 +95,7 @@ class Resolver
     /**
      * Return when trying to reset a password, but the token  was either invalid, expired, already used or changed.
      */
-    const RESULT_INVALID_TOKEN= "INVALID_TOKEN";
+    const RESULT_INVALID_TOKEN = "INVALID_TOKEN";
 
     /**
      * @return mixed
@@ -134,12 +139,12 @@ class Resolver
 
         /** @var JWTRecord $record */
         list($record, $status) = $authenticator->validateSignupToken($token, $request);
-        if(!$status === self::STATUS_OK) {
+        if (!$status === self::STATUS_OK) {
             return static::generateResponse($status, null,  $token);
-        } 
+        }
         $member = Member::get()->filter('SignupTokenID', $record->ID)->first();
-        if(!$member){
-            return static::generateResponse(self::STATUS_INVALID, null ,$token);
+        if (!$member) {
+            return static::generateResponse(self::STATUS_INVALID, null, $token);
         }
 
         $member->Activate();
@@ -149,7 +154,8 @@ class Resolver
         return static::generateResponse(self::STATUS_OK, $member, $memberToken);
     }
 
-    public static function resolveCreateAccount($object, array $args){
+    public static function resolveCreateAccount($object, array $args)
+    {
         $email = isset($args['email']) ? $args['email'] : null;
         $password = isset($args['password']) ? $args['password'] : null;
         $passwordConfirm = isset($args['passwordConfirm']) ? $args['passwordConfirm'] : null;
@@ -165,7 +171,7 @@ class Resolver
         }
 
         $member = Member::get()->filter('Email', $email)->first();
-        if($member){
+        if ($member) {
             return static::generateResultResponse(self::RESULT_ALREADY_REGISTERED);
         }
 
@@ -177,16 +183,15 @@ class Resolver
         }
         $member->write();
 
-        $token = $authenticator->generateSignupToken($request,$member);
+        $token = $authenticator->generateSignupToken($request, $member);
         // Add mailer class to config to send emails
         $mailerClass = static::config()->get('mailer_class');
         if ($mailerClass) {
             $mailer = Injector::inst()->get($mailerClass);
             $mailer->sendActivationEmail($member, $token, $request);
         }
-        
-        return static::generateResultResponse(self::RESULT_OK);
 
+        return static::generateResultResponse(self::RESULT_OK);
     }
 
     /**

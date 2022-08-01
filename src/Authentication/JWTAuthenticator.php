@@ -245,6 +245,16 @@ class JWTAuthenticator extends MemberAuthenticator
         /** @var JWTRecord $record */
         list($record, $status) = $this->validateToken($token, $request);
 
+        $member = $record->Member();
+        if (!$member->isActivated) {
+            $result->addError(
+                _t('JWT.STATUS_INACTIVATED_USER', 'User is not activated. Please check your email for activation link or request a new one.'),
+                Resolver::STATUS_INACTIVATED_USER,
+                $status
+            );
+            return null;
+        }
+
         // Report success!
         if ($status === Resolver::STATUS_OK) {
             return $record->Member();
@@ -256,6 +266,7 @@ class JWTAuthenticator extends MemberAuthenticator
             ValidationResult::TYPE_ERROR,
             $status
         );
+
         return null;
     }
 
@@ -449,6 +460,10 @@ class JWTAuthenticator extends MemberAuthenticator
             return [$record, Resolver::STATUS_INVALID];
         }
 
+        if (!$record->Member()->isActivated) {
+            return [$record, Resolver::STATUS_INACTIVATED_USER];
+        }
+
         // Verified and valid = ok!
         $valid = $this->validateParsedToken($parsedToken, $request, $record);
         if ($valid) {
@@ -525,7 +540,7 @@ class JWTAuthenticator extends MemberAuthenticator
         return [$record, Resolver::STATUS_OK];
     }
 
-    public function validateSignupToken(?string $token, HTTPRequest $request) : array
+    public function validateSignupToken(?string $token, HTTPRequest $request): array
     {
         list($record, $status) = $this->validateAnonymousToken($token, $request);
 
