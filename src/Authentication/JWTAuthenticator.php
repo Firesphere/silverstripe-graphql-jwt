@@ -40,8 +40,10 @@ use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Security\Authenticator;
+use SilverStripe\Security\Group;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\MemberAuthenticator\MemberAuthenticator;
+use SilverStripe\Security\Permission;
 
 class JWTAuthenticator extends MemberAuthenticator
 {
@@ -246,7 +248,7 @@ class JWTAuthenticator extends MemberAuthenticator
         list($record, $status) = $this->validateToken($token, $request);
 
         $member = $record->Member();
-        if (!$member->isActivated) {
+        if (!Permission::checkMember($member, 'ADMIN') && !$member->isActivated) {
             $result->addError(
                 _t('JWT.STATUS_INACTIVATED_USER', 'User is not activated. Please check your email for activation link or request a new one.'),
                 Resolver::STATUS_INACTIVATED_USER,
