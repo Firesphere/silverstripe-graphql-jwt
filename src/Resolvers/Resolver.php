@@ -18,10 +18,7 @@ use BadMethodCallException;
 use Exception;
 use Firesphere\GraphQLJWT\Helpers\AnonymousTokenGenerator;
 use Firesphere\GraphQLJWT\Helpers\CreateTokenResponseGenerator;
-use Firesphere\GraphQLJWT\Helpers\CreateAccountResponseGenerator;
-use Firesphere\GraphQLJWT\Helpers\ErrorMessageGenerator;
-use Firesphere\GraphQLJWT\Helpers\RequestPasswordResetResponseGenerator;
-use Firesphere\GraphQLJWT\Helpers\ResetPasswordResponseGenerator;
+use Firesphere\GraphQLJWT\Helpers\MutationResultGenerator;
 use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Security\Authenticator;
 use SilverStripe\Security\Member;
@@ -37,10 +34,8 @@ class Resolver
     use MemberTokenGenerator;
     use AnonymousTokenGenerator;
     use HeaderExtractor;
-    use RequestPasswordResetResponseGenerator;
-    use ResetPasswordResponseGenerator;
     use CreateTokenResponseGenerator;
-    use CreateAccountResponseGenerator;
+    use MutationResultGenerator;
     use Configurable;
 
     /**
@@ -64,29 +59,43 @@ class Resolver
     const STATUS_DEAD = 'DEAD';
 
     /**
+     * Return when a hidden/anonymous mutation result was ok
+     */
+    const RESULT_OK = 'OK';
+    /**
      * Provided user / password were incorrect
      */
-    const STATUS_BAD_LOGIN = 'BAD_LOGIN';
+    const RESULT_BAD_LOGIN = 'BAD_LOGIN';
 
     /**
      * Provided user email were incorrect
      */
-    const STATUS_BAD_REQUEST = 'BAD_REQUEST';
+    const RESULT_BAD_REQUEST = 'BAD_REQUEST';
 
     /**
      * Provided new password didn't validate
      */
-    const STATUS_INVALID_PASSWORD = "INVALID_PASSWORD";
+    const RESULT_INVALID_PASSWORD = "INVALID_PASSWORD";
 
     /**
      * Provided new passwords didn't match
      */
-    const STATUS_PASSWORD_MISSMATCH = "PASSWORD_MISSMATCH";
+    const RESULT_PASSWORD_MISSMATCH = "PASSWORD_MISSMATCH";
 
     /**
-     * 
+     * Return when trying to register an account that already exists.
      */
-    const STATUS_ALREADY_REGISTERED = "ALREADY_REGISTERED";
+    const RESULT_ALREADY_REGISTERED = "ALREADY_REGISTERED";
+
+    /**
+     * Return when a given password was able to be applied to the member
+     */
+    const RESULT_BAD_PASSWORD = "BAD_PASSWORD";
+
+    /**
+     * Return when trying to reset a password, but the token  was either invalid, expired, already used or changed.
+     */
+    const RESULT_INVALID_TOKEN= "INVALID_TOKEN";
 
     /**
      * @return mixed
@@ -131,7 +140,7 @@ class Resolver
         /** @var JWTRecord $record */
         list($record, $status) = $authenticator->validateSignupToken($token, $request);
         if(!$status === self::STATUS_OK) {
-            return static::generateResponse($status,null,  $token);
+            return static::generateResponse($status, null,  $token);
         } 
         $member = Member::get()->filter('SignupTokenID', $record->ID)->first();
         if(!$member){
@@ -153,23 +162,23 @@ class Resolver
         $request = Controller::curr()->getRequest();
 
         if (!$email || !$password || !$passwordConfirm) {
-            return static::generateCreateAccountResponse(self::STATUS_BAD_REQUEST);
+            return static::generateResultResponse(self::RESULT_BAD_REQUEST);
         }
 
         if ($password !== $passwordConfirm) {
-            return static::generateCreateAccountResponse(self::STATUS_PASSWORD_MISSMATCH, [ErrorMessageGenerator::getErrorMessage(self::STATUS_PASSWORD_MISSMATCH)]);
+            return static::generateResultResponse(self::RESULT_PASSWORD_MISSMATCH);
         }
 
         $member = Member::get()->filter('Email', $email)->first();
         if($member){
-            return static::generateCreateAccountResponse(self::STATUS_ALREADY_REGISTERED, [ErrorMessageGenerator::getErrorMessage(self::STATUS_ALREADY_REGISTERED)]);
+            return static::generateResultResponse(self::RESULT_ALREADY_REGISTERED);
         }
 
         $member = Member::create();
         $member->Email = $email;
         $result = $member->changePassword($password);
         if (!$result->isValid()) {
-            return static::generateCreateAccountResponse(self::STATUS_BAD_REQUEST, $result->getMessages());
+            return static::generateResultResponse(self::RESULT_BAD_PASSWORD, $result->getMessages());
         }
         $member->write();
 
@@ -181,13 +190,8 @@ class Resolver
             $mailer->sendActivationEmail($member, $token, $request);
         }
         
-        return static::generateCreateAccountResponse(self::STATUS_OK);
+        return static::generateResultResponse(self::RESULT_OK);
 
-    }
-
-    protected static function onAfterCreateMember(Member $member)
-    {
-        
     }
 
     /**
@@ -272,12 +276,12 @@ class Resolver
         $email = isset($args['email']) ? $args['email'] : null;
 
         if (!$email) {
-            return static::generateRequestPasswordResponse(self::STATUS_OK);
+            return static::generateResultResponse(self::RESULT_BAD_REQUEST);
         }
 
         $member = Member::get()->filter('Email', $email)->first();
         if (!$member) {
-            return static::generateRequestPasswordResponse(self::STATUS_OK);
+            return static::generateResultResponse(self::RESULT_OK);
         }
 
         // Create new reset token from this member
@@ -291,7 +295,7 @@ class Resolver
             $mailer->sendResetPasswordEmail($member, $token, $request);
         }
 
-        return static::generateRequestPasswordResponse(self::STATUS_OK);
+        return static::generateResultResponse(self::RESULT_OK);
     }
 
     public static function resolveResetPassword($object, array $args)
@@ -303,33 +307,33 @@ class Resolver
         $request = Controller::curr()->getRequest();
 
         if (!$token || !$newPassword || !$passwordConfirm) {
-            return static::generateResetPasswordResponse(self::STATUS_BAD_REQUEST);
+            return static::generateResultResponse(self::RESULT_BAD_REQUEST);
         }
 
         if ($newPassword !== $passwordConfirm) {
-            return static::generateResetPasswordResponse(self::STATUS_PASSWORD_MISSMATCH);
+            return static::generateResultResponse(self::RESULT_PASSWORD_MISSMATCH);
         }
 
         list($record, $status) = $authenticator->validateResetToken($token, $request);
 
         if ($status !== self::STATUS_OK) {
-            return static::generateResetPasswordResponse($status);
+            return static::generateResultResponse(self::RESULT_INVALID_TOKEN);
         }
 
         $member = Member::get()->filter('ResetTokenID', $record->ID)->first();
 
         if (!$member) {
-            return static::generateResetPasswordResponse(self::STATUS_INVALID);
+            return static::generateResultResponse(self::RESULT_INVALID_TOKEN);
         }
 
         $result = $member->changePassword($newPassword);
 
         if ($result->isValid()) {
             static::afterResetPassword($member);
-            return static::generateResetPasswordResponse(self::STATUS_OK);
+            return static::generateResultResponse(self::RESULT_OK);
         }
 
-        return static::generateInvalidPasswordResponse(self::STATUS_INVALID_PASSWORD, $result->getMessages());
+        return static::generateResultResponse(self::RESULT_INVALID_PASSWORD, $result->getMessages());
     }
 
     protected static function afterResetPassword(Member $member)

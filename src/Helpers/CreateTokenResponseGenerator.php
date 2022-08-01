@@ -29,7 +29,7 @@ trait CreateTokenResponseGenerator
     {
         // Success response
         $valid = $validationResult->isValid();
-        $status = $valid ? Resolver::STATUS_OK : Resolver::STATUS_BAD_LOGIN;
+        $status = $valid ? Resolver::STATUS_OK : Resolver::RESULT_BAD_LOGIN;
         $message = count($validationResult->getMessages()) > 0
             ? $validationResult->getMessages()[0]["message"]
             : ErrorMessageGenerator::getErrorMessage($status);

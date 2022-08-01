@@ -16,18 +16,7 @@ AnonymousToken:
     code: Int
     message: String
 
-RequestResetPasswordSuccess:
-  fields:
-    successful: Boolean
-    message: String
-
-ResetPasswordResponse:
-  fields:
-    successful: Boolean
-    message: String
-
-CreateAccountResponse:
+MutationResult: 
   fields: 
-    successful: Boolean
+    result: String
     message: String
-    clientMessages: String
