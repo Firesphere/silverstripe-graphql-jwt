@@ -31,13 +31,16 @@ class ErrorMessageGenerator
         return _t('JWT.STATUS_INVALID', 'Invalid token provided');
       case Resolver::STATUS_OK:
         return _t('JWT.STATUS_OK', 'Token is ok');
+      case Resolver::STATUS_INACTIVATED_USER:
+        return _t('JWT.STATUS_INACTIVATED_USER', 'User is not activated');
       default:
         throw new InvalidArgumentException("Invalid status");
     }
   }
 
-  public static function getResultMessage($result){
-    switch($result){
+  public static function getResultMessage($result)
+  {
+    switch ($result) {
       case Resolver::RESULT_ALREADY_REGISTERED:
         return _t('JWT.RESULT_ALREADY_REGISTERED', 'Email address is already registered');
       case Resolver::RESULT_PASSWORD_MISSMATCH:
