@@ -17,6 +17,15 @@ use SilverStripe\Security\Member;
  */
 trait CreateTokenResponseGenerator
 {
+
+    private static function getStatusFromValidationResult(ValidationResult $validationResult)
+    {
+        $messages = $validationResult->getMessages();
+        if (!count($messages)) return Resolver::STATUS_OK;
+        if ($messages[0]["messageType"] === Resolver::STATUS_INACTIVATED_USER) return Resolver::STATUS_INACTIVATED_USER;
+        return Resolver::RESULT_BAD_LOGIN;
+    }
+
     /**
      * Generate MemberToken response
      *
@@ -30,9 +39,7 @@ trait CreateTokenResponseGenerator
         // Success response
         $valid = $validationResult->isValid();
         $messages = $validationResult->getMessages();
-        $status = count($messages) ? $messages[0]['messageType'] :
-            RESOLVER::STATUS_OK;
-
+        $status = self::getStatusFromValidationResult($validationResult);
         $message = count($messages) > 0
             ? $messages[0]["message"]
             : ErrorMessageGenerator::getErrorMessage($status);
