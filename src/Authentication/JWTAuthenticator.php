@@ -247,8 +247,9 @@ class JWTAuthenticator extends MemberAuthenticator
         /** @var JWTRecord $record */
         list($record, $status) = $this->validateToken($token, $request);
 
-        $member = $record->Member();
-        if (!Permission::checkMember($member, 'ADMIN') && !$member->isActivated) {
+        $member = $record ? $record->Member() : null;
+
+        if ($member && (!Permission::checkMember($member, 'ADMIN') && !$member->isActivated)) {
             $result->addError(
                 _t('JWT.STATUS_INACTIVATED_USER', 'User is not activated. Please check your email for activation link or request a new one.'),
                 Resolver::STATUS_INACTIVATED_USER,
