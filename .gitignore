@@ -3,4 +3,4 @@
 /resources
 composer.lock
 /_resources
-
+/.vscode
