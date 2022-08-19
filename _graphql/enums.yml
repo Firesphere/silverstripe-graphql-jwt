@@ -12,8 +12,8 @@ TokenStatus:
     DEAD:
       value: DEAD
       description: JWT token has expired and cannot be renewed
-    INACTIVATED_USER:
-      value: INACTIVATED_USER
+    INACTIVATE_USER:
+      value: INACTIVATE_USER
       description: JWT token belongs to an inactivated user
     BAD_LOGIN:
       value: BAD_LOGIN
