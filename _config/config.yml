@@ -1,5 +1,6 @@
 ---
 Name: firesphere-jwt-injections
+After: "#coresecurity"
 ---
 SilverStripe\Core\Injector\Injector:
   SilverStripe\Security\AuthenticationHandler:
@@ -9,5 +10,7 @@ SilverStripe\Core\Injector\Injector:
   Firesphere\GraphQLJWT\Authentication\JWTAuthenticationHandler:
     properties:
       JWTAuthenticator: '%$Firesphere\GraphQLJWT\Authentication\JWTAuthenticator'
-  Silverstripe\Security\MemberAuthenticator\MemberAuthenticator:
-    class: Firesphere\GraphQLJWT\Extensions\ExtendedMemberAuthenticator
+  SilverStripe\Security\Security:
+    properties:
+      Authenticators:
+        default: '%$Firesphere\GraphQLJWT\Extensions\ExtendedMemberAuthenticator'
