@@ -9,3 +9,5 @@ SilverStripe\Core\Injector\Injector:
   Firesphere\GraphQLJWT\Authentication\JWTAuthenticationHandler:
     properties:
       JWTAuthenticator: '%$Firesphere\GraphQLJWT\Authentication\JWTAuthenticator'
+  Silverstripe\Security\MemberAuthenticator\MemberAuthenticator:
+    class: Firesphere\GraphQLJWT\Extensions\ExtendedMemberAuthenticator
