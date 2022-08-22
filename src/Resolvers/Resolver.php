@@ -184,11 +184,44 @@ class Resolver
         $member->write();
 
         $token = $authenticator->generateSignupToken($request, $member);
+
         // Add mailer class to config to send emails
         $mailerClass = static::config()->get('mailer_class');
         if ($mailerClass) {
             $mailer = Injector::inst()->get($mailerClass);
             $mailer->sendActivationEmail($member, $token, $request);
+        }
+
+        return static::generateResultResponse(self::RESULT_OK);
+    }
+
+    public static function resolveRequestActivationLink($object, array $args)
+    {
+        $email = isset($args['email']) ? $args['email'] : null;
+
+        if (!$email) {
+            return static::generateResultResponse(self::RESULT_BAD_REQUEST);
+        }
+
+        $member = Member::get()->filter('Email', $email)->first();
+        if (!$member || $member->isActivated) {
+            return static::generateResultResponse(self::RESULT_OK);
+        }
+
+        $authenticator = Injector::inst()->get(JWTAuthenticator::class);
+        $request = Controller::curr()->getRequest();
+
+        $token = $authenticator->generateSignupToken($request, $member);
+
+        // Add mailer class to config to send emails
+        $mailerClass = static::config()->get('mailer_class');
+        if ($mailerClass) {
+            try {
+                $mailer = Injector::inst()->get($mailerClass);
+                $mailer->sendActivationEmail($member, $token, $request);
+            } catch (\Throwable $ex) {
+                return static::generateResultResponse(self::RESULT_BAD_REQUEST);
+            }
         }
 
         return static::generateResultResponse(self::RESULT_OK);

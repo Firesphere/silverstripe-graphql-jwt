@@ -20,6 +20,10 @@ logOut:
   type: MemberToken
   description: Activate an account for a given token
 
+"requestActivationLink(email: String!)":
+  type: MutationResult
+  description: Request a new activation link for given user
+
 "createAccount(email: String!, password: String!, passwordConfirm: String!)":
   type: MutationResult
   description: Create a new user and send an activation email
