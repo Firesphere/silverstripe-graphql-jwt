@@ -188,8 +188,12 @@ class Resolver
         // Add mailer class to config to send emails
         $mailerClass = static::config()->get('mailer_class');
         if ($mailerClass) {
-            $mailer = Injector::inst()->get($mailerClass);
-            $mailer->sendActivationEmail($member, $token, $request);
+            try {
+                $mailer = Injector::inst()->get($mailerClass);
+                $mailer->sendActivationEmail($member, $token, $request);
+            } catch (\Throwable $ex) {
+                return static::generateResultResponse(self::RESULT_BAD_REQUEST);
+            }
         }
 
         return static::generateResultResponse(self::RESULT_OK);
@@ -324,8 +328,12 @@ class Resolver
         // Add mailer class to config to send emails
         $mailerClass = static::config()->get('mailer_class');
         if ($mailerClass) {
-            $mailer = Injector::inst()->get($mailerClass);
-            $mailer->sendResetPasswordEmail($member, $token, $request);
+            try {
+                $mailer = Injector::inst()->get($mailerClass);
+                $mailer->sendResetPasswordEmail($member, $token, $request);
+            } catch (\Throwable $ex) {
+                return static::generateResultResponse(self::RESULT_BAD_REQUEST);
+            }
         }
 
         return static::generateResultResponse(self::RESULT_OK);
