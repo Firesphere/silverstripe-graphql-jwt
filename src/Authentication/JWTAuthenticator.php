@@ -595,7 +595,7 @@ class JWTAuthenticator extends MemberAuthenticator
         // @todo - upgrade
         // @see https://lcobucci-jwt.readthedocs.io/en/latest/upgrading/#replace-tokenverify-and-tokenvalidate-with-validation-api
         $this->config->setValidationConstraints(
-            new IssuedBy($request->getHeader('Origin')),
+            new IssuedBy(...$this->getAllowedDomains()),
             new PermittedFor(Director::absoluteBaseURL()),
             new IdentifiedBy($record->UID),
             new StrictValidAt(new SystemClock(new DateTimeZone(date_default_timezone_get()))),
