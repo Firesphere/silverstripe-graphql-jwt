@@ -24,9 +24,10 @@ class JWTAuthenticatorTest extends SapphireTest
 
     protected $token;
 
-    public function setUp()
+    protected function setUp(): void
     {
-        Environment::setEnv('JWT_SIGNER_KEY', 'test_signer');
+        Controller::curr()->getRequest()->addHeader('Origin', 'GraphQLJWT_Test');
+        Environment::setEnv('JWT_SIGNER_KEY', 'a_256bits_test_signer_or_it_would_not_work_correctly');
 
         parent::setUp();
         $this->member = $this->objFromFixture(Member::class, 'admin');
@@ -58,7 +59,7 @@ class JWTAuthenticatorTest extends SapphireTest
      */
     public function testInvalidToken()
     {
-        Environment::setEnv('JWT_SIGNER_KEY', 'string');
+        Environment::setEnv('JWT_SIGNER_KEY', 'a_long_long_long_long_long_long_long_long_long_string');
 
         $authenticator = JWTAuthenticator::singleton();
         $request = clone Controller::curr()->getRequest();
@@ -119,7 +120,7 @@ class JWTAuthenticatorTest extends SapphireTest
         $this->assertInstanceOf(Member::class, $result);
         $this->assertEquals($this->member->ID, $result->ID);
 
-        Environment::setEnv('JWT_SIGNER_KEY', 'test_signer');
+        Environment::setEnv('JWT_SIGNER_KEY', 'a_256bits_test_signer_or_it_would_not_work_correctly');
         // After changing the key to a string, the token should be invalid
         $result = $authenticator->authenticate(['token' => $token], $request);
         $this->assertNull($result);

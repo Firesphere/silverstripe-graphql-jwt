@@ -21,9 +21,10 @@ class JWTAuthenticationHandlerTest extends SapphireTest
 
     protected $token;
 
-    public function setUp()
+    protected function setUp(): void
     {
-        Environment::putEnv('JWT_SIGNER_KEY=test_signer');
+        Controller::curr()->getRequest()->addHeader('Origin', 'GraphQLJWT_Test');
+        Environment::putEnv('JWT_SIGNER_KEY=a_256bits_test_signer_or_it_would_not_work_correctly');
 
         parent::setUp();
         $this->member = $this->objFromFixture(Member::class, 'admin');
@@ -40,7 +41,7 @@ class JWTAuthenticationHandlerTest extends SapphireTest
      */
     public function testInvalidAuthenticateRequest()
     {
-        Environment::putEnv('JWT_SIGNER_KEY=string');
+        Environment::putEnv('JWT_SIGNER_KEY=a_long_long_long_long_long_long_long_long_long_string');
 
         $request = clone Controller::curr()->getRequest();
         $request->addHeader('Authorization', 'Bearer ' . $this->token);
@@ -48,7 +49,7 @@ class JWTAuthenticationHandlerTest extends SapphireTest
         $handler = JWTAuthenticationHandler::singleton();
 
         $result = $handler->authenticateRequest($request);
-        Environment::putEnv('JWT_SIGNER_KEY=test_signer');
+        Environment::putEnv('JWT_SIGNER_KEY=a_256bits_test_signer_or_it_would_not_work_correctly');
 
         $this->assertNull($result);
     }

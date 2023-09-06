@@ -5,6 +5,7 @@ namespace Firesphere\GraphQLJWT\Tests;
 use Firesphere\GraphQLJWT\Authentication\AnonymousUserAuthenticator;
 use Firesphere\GraphQLJWT\Authentication\CustomAuthenticatorRegistry;
 use Firesphere\GraphQLJWT\Resolvers\Resolver;
+use SilverStripe\Control\Controller;
 use SilverStripe\Core\Environment;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
@@ -16,9 +17,10 @@ class CreateTokenTest extends SapphireTest
 
     protected $member;
 
-    public function setUp()
+    protected function setUp(): void
     {
-        Environment::putEnv('JWT_SIGNER_KEY=test_signer');
+        Controller::curr()->getRequest()->addHeader('Origin', 'GraphQLJWT_Test');
+        Environment::putEnv('JWT_SIGNER_KEY=a_256bits_test_signer_or_it_would_not_work_correctly');
 
         parent::setUp();
         $this->member = $this->objFromFixture(Member::class, 'admin');

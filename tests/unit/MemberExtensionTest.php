@@ -10,7 +10,6 @@ namespace Firesphere\GraphQLJWT\Tests;
 
 use Firesphere\GraphQLJWT\Extensions\MemberExtension;
 use SilverStripe\Core\Config\Config;
-use SilverStripe\Core\Convert;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Security\Member;
 
@@ -24,7 +23,7 @@ class MemberExtensionTest extends SapphireTest
         $member = $this->objFromFixture(Member::class, 'admin');
 
         $data = $member->getJWTData();
-        $result = Convert::json2obj($data);
+        $result = json_decode($data);
 
         $this->assertEquals($member->Email, $result->userName);
     }
@@ -37,7 +36,7 @@ class MemberExtensionTest extends SapphireTest
         Config::modify()->set(Member::class, 'jwt_subject_fields', ['FirstName', 'Surname']);
 
         $data = $member->getJWTData();
-        $result = Convert::json2obj($data);
+        $result = json_decode($data);
 
         $this->assertEquals('Admin', $result->firstName);
         $this->assertEquals('Member', $result->surname);
@@ -48,7 +47,7 @@ class MemberExtensionTest extends SapphireTest
         /** @var Member|MemberExtension $memberl */
         $memberl = Member::create();
         $data = $memberl->getJWTData();
-        $result = Convert::json2array($data);
+        $result = json_decode($data, true);
 
         $this->assertEquals(0, $result['id']);
     }
