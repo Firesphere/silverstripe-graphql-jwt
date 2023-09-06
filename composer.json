@@ -4,10 +4,9 @@
     "type": "silverstripe-vendormodule",
     "license": "bsd-3-clause",
     "require": {
-        "php": ">=7.1",
-        "silverstripe/framework": "^4.3",
-        "silverstripe/graphql": "4.x-dev",
-        "lcobucci/jwt": "^3.2",
+        "php": "^8",
+        "silverstripe/framework": "^5",
+        "lcobucci/jwt": "^5.1",
         "ext-json": "*"
     },
     "require-dev": {

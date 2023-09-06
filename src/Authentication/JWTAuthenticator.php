@@ -10,16 +10,26 @@ use Firesphere\GraphQLJWT\Extensions\MemberExtension;
 use Firesphere\GraphQLJWT\Helpers\MemberTokenGenerator;
 use Firesphere\GraphQLJWT\Model\JWTRecord;
 use Firesphere\GraphQLJWT\Resolvers\Resolver;
-use Lcobucci\JWT\Builder;
-use Lcobucci\JWT\Parser;
+use Lcobucci\JWT\Encoding\ChainedFormatter;
+use Lcobucci\JWT\Encoding\JoseEncoder;
 use Lcobucci\JWT\Signer;
 use Lcobucci\JWT\Signer\Hmac;
 use Lcobucci\JWT\Signer\Key;
+use Lcobucci\JWT\Signer\Key\InMemory;
 use Lcobucci\JWT\Signer\Rsa;
 use Lcobucci\JWT\Token;
-use Lcobucci\JWT\ValidationData;
+use Lcobucci\JWT\Token\Builder;
+use Lcobucci\JWT\Token\Parser;
+use Lcobucci\JWT\Validation\Constraint\IdentifiedBy;
+use Lcobucci\JWT\Validation\Constraint\IssuedBy;
+use Lcobucci\JWT\Validation\Constraint\LooseValidAt;
+use Lcobucci\JWT\Validation\Constraint\PermittedFor;
+use Lcobucci\JWT\Validation\Constraint\RelatedTo;
+use Lcobucci\JWT\Validation\Constraint\SignedWith;
+use Lcobucci\JWT\Validation\Validator;
 use LogicException;
 use OutOfBoundsException;
+use Psr\Clock\ClockInterface as Clock;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Core\Config\Configurable;
@@ -169,11 +179,11 @@ class JWTAuthenticator extends MemberAuthenticator
 
         // String key
         if (empty($path)) {
-            return new Key($path);
+            return InMemory::base64Encoded($key);
         }
 
         // Build key from path
-        return new Key('file://' . $path, $password);
+        return InMemory::file('file://' . $path, $password);
     }
 
     /**
@@ -243,7 +253,8 @@ class JWTAuthenticator extends MemberAuthenticator
         }
 
         // Create builder for this record
-        $builder = new Builder();
+        $builder = (new Builder(new JoseEncoder(), ChainedFormatter::default()));
+
         $token = $builder
             // Configures the issuer (iss claim)
             ->issuedBy($request->getHeader('Origin'))
@@ -298,7 +309,7 @@ class JWTAuthenticator extends MemberAuthenticator
         }
 
         // If the token is invalid, but not because it has expired, fail
-        if (!$parsedToken->isExpired($this->getNow())) {
+        if (!(new Validator())->validate($parsedToken, new LooseValidAt($this->getClock()))) {
             return [$record, Resolver::STATUS_INVALID];
         }
 
@@ -327,7 +338,7 @@ class JWTAuthenticator extends MemberAuthenticator
 
         try {
             // Verify parsed token matches signer
-            $parser = new Parser();
+            $parser = new Parser(new JoseEncoder());
             $parsedToken = $parser->parse($token);
         } catch (Exception $ex) {
             // Un-parsable tokens are invalid
@@ -335,7 +346,9 @@ class JWTAuthenticator extends MemberAuthenticator
         }
 
         // Verify this token with configured keys
-        $verified = $parsedToken->verify($this->getSigner(), $this->getPublicKey());
+        $validator = new Validator();
+        $verified = $validator->validate($parsedToken, new SignedWith($this->getSigner(), $this->getPublicKey()));
+
         return $verified ? $parsedToken : null;
     }
 
@@ -350,14 +363,24 @@ class JWTAuthenticator extends MemberAuthenticator
      */
     protected function validateParsedToken(Token $parsedToken, HTTPrequest $request, JWTRecord $record): bool
     {
-        // @todo - upgrade
-        // @see https://lcobucci-jwt.readthedocs.io/en/latest/upgrading/#replace-tokenverify-and-tokenvalidate-with-validation-api
-        $validator = new ValidationData();
-        $validator->setIssuer($request->getHeader('Origin'));
-        $validator->setAudience(Director::absoluteBaseURL());
-        $validator->setId($record->UID);
-        $validator->setCurrentTime($this->getNow()->getTimestamp());
-        return $parsedToken->validate($validator);
+        $validator = new Validator();
+
+        if (!$validator->validate($parsedToken, new IssuedBy($request->getHeader('Origin')))) {
+            // The token was not issued by the given issuer
+            return false;
+        }
+
+        if (!$validator->validate($parsedToken, new PermittedFor(Director::absoluteBaseURL()))) {
+            // The token is not allowed to be used by this audience
+            return false;
+        }
+
+        if (!$validator->validate($parsedToken, new IdentifiedBy($record->UID))) {
+            // The token is not related to the expected subject
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -427,5 +450,18 @@ class JWTAuthenticator extends MemberAuthenticator
     protected function getNowPlus($seconds)
     {
         return $this->getNow()->add(new DateInterval(sprintf("PT%dS", $seconds)));
+    }
+
+    /**
+     * @return Clock
+     */
+    protected function getClock(): Clock
+    {
+        return new class implements Clock {
+            public function now(): DateTimeImmutable
+            {
+                return new DateTimeImmutable(DBDatetime::now()->getValue());
+            }
+        };
     }
 }
