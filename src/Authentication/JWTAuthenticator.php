@@ -179,11 +179,15 @@ class JWTAuthenticator extends MemberAuthenticator
 
         // String key
         if (empty($path)) {
-            return InMemory::base64Encoded($key);
+            if ($this->isBase64String($key)) {
+                return InMemory::base64Encoded($key);
+            } else {
+                return InMemory::plainText($key);
+            }
         }
 
         // Build key from path
-        return InMemory::file('file://' . $path, $password);
+        return InMemory::file($path, $password);
     }
 
     /**
@@ -463,5 +467,24 @@ class JWTAuthenticator extends MemberAuthenticator
                 return new DateTimeImmutable(DBDatetime::now()->getValue());
             }
         };
+    }
+
+    /**
+     * @param string $string
+     * @return bool
+     */
+    protected function isBase64String(string $string): bool
+    {
+        // Check if there are valid base64 characters
+        if (!preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $string)) return false;
+    
+        // Decode the string in strict mode and check the results
+        $decoded = base64_decode($string, true);
+        if(false === $decoded) return false;
+    
+        // Encode the string again
+        if(base64_encode($decoded) != $string) return false;
+    
+        return true;
     }
 }
