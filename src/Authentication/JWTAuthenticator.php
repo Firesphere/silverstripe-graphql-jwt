@@ -313,7 +313,7 @@ class JWTAuthenticator extends MemberAuthenticator
         }
 
         // If the token is invalid, but not because it has expired, fail
-        if (!(new Validator())->validate($parsedToken, new LooseValidAt($this->getClock()))) {
+        if ((new Validator())->validate($parsedToken, new LooseValidAt($this->getClock()))) {
             return [$record, Resolver::STATUS_INVALID];
         }
 
@@ -381,6 +381,11 @@ class JWTAuthenticator extends MemberAuthenticator
 
         if (!$validator->validate($parsedToken, new IdentifiedBy($record->UID))) {
             // The token is not related to the expected subject
+            return false;
+        }
+
+        if (!$validator->validate($parsedToken, new LooseValidAt($this->getClock()))) {
+            // The token is expired
             return false;
         }
 
