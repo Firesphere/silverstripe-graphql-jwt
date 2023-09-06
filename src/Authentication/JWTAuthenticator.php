@@ -453,7 +453,16 @@ class JWTAuthenticator extends MemberAuthenticator
      */
     protected function getNowPlus($seconds)
     {
-        return $this->getNow()->add(new DateInterval(sprintf("PT%dS", $seconds)));
+        $sec = $seconds;
+        $sec = ($sec < 0) ? abs($sec) : $sec;
+
+        $di = new DateInterval(sprintf("PT%dS", $sec));
+
+        if ($seconds < 0) {
+            $di->invert = 1;
+        }
+
+        return $this->getNow()->add($di);
     }
 
     /**
