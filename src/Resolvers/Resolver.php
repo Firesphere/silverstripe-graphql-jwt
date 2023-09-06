@@ -167,7 +167,7 @@ class Resolver
         // Normalise the casing for the authenticator
         $data = [
             'Email' => $args['email'],
-            'Password' => $args['password'] ?? null,
+            'Password' => $args['password'],
         ];
         // Login with authenticators
         foreach (static::getLoginAuthenticators() as $authenticator) {
