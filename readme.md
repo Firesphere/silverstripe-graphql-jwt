@@ -127,7 +127,7 @@ You can then create an anonymous login with the below query.
 
 ```graphql
 mutation {
-  createToken(email: "anonymous") {
+  createToken(email: "anonymous", password: "any_random_string") {
     token
   }
 }

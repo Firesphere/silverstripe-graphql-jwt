@@ -51,7 +51,7 @@ class RefreshTokenTest extends SapphireTest
         // Anonymous token
         $response = Resolver::resolveCreateToken(
             null,
-            ['email' => 'anonymous']
+            ['email' => 'anonymous', 'password' => 'any_random_string']
         );
         $this->anonymousToken = $response['token'];
     }

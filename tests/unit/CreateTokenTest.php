@@ -45,7 +45,7 @@ class CreateTokenTest extends SapphireTest
             ]);
         $response = Resolver::resolveCreateToken(
             null,
-            ['email' => 'anonymous']
+            ['email' => 'anonymous', 'password' => 'any_random_string']
         );
 
         /** @var Member $member */
@@ -60,7 +60,7 @@ class CreateTokenTest extends SapphireTest
     {
         $response = Resolver::resolveCreateToken(
             null,
-            ['email' => 'anonymous']
+            ['email' => 'anonymous', 'password' => 'any_random_string']
         );
 
         $this->assertNull($response['member']);
