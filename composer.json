@@ -2,7 +2,7 @@
     "name": "firesphere/graphql-jwt",
     "description": "JWT Authentication for GraphQL",
     "type": "silverstripe-vendormodule",
-    "license": "bsd-3-clause",
+    "license": "GPL-3.0-or-later",
     "require": {
         "php": ">=7.1",
         "silverstripe/framework": "^4.3",
