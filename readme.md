@@ -4,7 +4,7 @@
 
 # License
 
-[LICENSE.md](GPL v3.0 or later)
+[GPL v3 or later](LICENSE.md)
 
 # GraphQL JSON Web Token authenticator
 
