@@ -1,0 +1,12 @@
+---
+Name: jwt-session-manager-middleware
+After: '#session-manager-middleware'
+Only:
+  moduleexists:
+    - 'silverstripe/session-manager'
+---
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\Control\Director:
+    properties:
+      Middlewares:
+        LoginSessionMiddleware: '%$Firesphere\GraphQLJWT\Middleware\JWTLoginSessionMiddleware'

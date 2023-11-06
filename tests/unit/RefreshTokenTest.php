@@ -3,9 +3,9 @@
 namespace Firesphere\GraphQLJWT\Tests;
 
 use Firesphere\GraphQLJWT\Authentication\AnonymousUserAuthenticator;
+use Firesphere\GraphQLJWT\Authentication\CustomAuthenticatorRegistry;
 use Firesphere\GraphQLJWT\Authentication\JWTAuthenticator;
-use Firesphere\GraphQLJWT\Mutations\CreateTokenMutationCreator;
-use Firesphere\GraphQLJWT\Mutations\RefreshTokenMutationCreator;
+use Firesphere\GraphQLJWT\Resolvers\Resolver;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\Session;
@@ -16,7 +16,7 @@ use SilverStripe\Dev\SapphireTest;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\Member;
 
-class RefreshTokenMutationCreatorTest extends SapphireTest
+class RefreshTokenTest extends SapphireTest
 {
     protected static $fixture_file = '../fixtures/JWTAuthenticatorTest.yml';
 
@@ -26,43 +26,37 @@ class RefreshTokenMutationCreatorTest extends SapphireTest
 
     protected $anonymousToken;
 
-    /**
-     * @throws ValidationException
-     */
-    public function setUp()
+    protected function setUp(): void
     {
-        Environment::setENv('JWT_SIGNER_KEY', 'test_signer');
+        Controller::curr()->getRequest()->addHeader('Origin', 'GraphQLJWT_Test');
+        Environment::setENv('JWT_SIGNER_KEY', 'a_256bits_test_signer_or_it_would_not_work_correctly');
 
         parent::setUp();
         $this->member = $this->objFromFixture(Member::class, 'admin');
 
         // Enable anonymous authentication for this test
-        $createToken = CreateTokenMutationCreator::singleton();
-        $createToken->setCustomAuthenticators([AnonymousUserAuthenticator::singleton()]);
+        Injector::inst()->get(CustomAuthenticatorRegistry::class)
+            ->setCustomAuthenticators([AnonymousUserAuthenticator::singleton()]);
 
         // Requires to be an expired token
         Config::modify()->set(JWTAuthenticator::class, 'nbf_expiration', -5);
 
         // Normal token
-        $response = $createToken->resolve(
+        $response = Resolver::resolveCreateToken(
             null,
-            ['Email' => 'admin@silverstripe.com', 'Password' => 'error'],
-            [],
-            new ResolveInfo([])
+            ['email' => 'admin@silverstripe.com', 'password' => 'error']
         );
-        $this->token = $response['Token'];
+        $this->token = $response['token'];
 
         // Anonymous token
-        $response = $createToken->resolve(
+        $response = Resolver::resolveCreateToken(
             null,
-            ['Email' => 'anonymous'],
-            [],
-            new ResolveInfo([])
+            ['email' => 'anonymous', 'password' => 'any_random_string']
         );
-        $this->anonymousToken = $response['Token'];
+        $this->anonymousToken = $response['token'];
     }
 
-    public function tearDown()
+    protected function tearDown(): void
     {
         parent::tearDown();
     }
@@ -83,21 +77,19 @@ class RefreshTokenMutationCreatorTest extends SapphireTest
     {
         $this->buildRequest();
 
-        $queryCreator = Injector::inst()->get(RefreshTokenMutationCreator::class);
-        $response = $queryCreator->resolve(null, [], [], new ResolveInfo([]));
+        $response = Resolver::resolveRefreshToken();
 
-        $this->assertNotNull($response['Token']);
-        $this->assertInstanceOf(Member::class, $response['Member']);
+        $this->assertNotNull($response['token']);
+        $this->assertInstanceOf(Member::class, $response['member']);
     }
 
     public function testAnonRefreshToken()
     {
         $this->buildRequest(true);
 
-        $queryCreator = Injector::inst()->get(RefreshTokenMutationCreator::class);
-        $response = $queryCreator->resolve(null, [], [], new ResolveInfo([]));
+        $response = Resolver::resolveRefreshToken();
 
-        $this->assertNotNull($response['Token']);
-        $this->assertInstanceOf(Member::class, $response['Member']);
+        $this->assertNotNull($response['token']);
+        $this->assertInstanceOf(Member::class, $response['member']);
     }
 }

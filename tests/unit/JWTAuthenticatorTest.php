@@ -6,6 +6,7 @@ use Exception;
 use Firesphere\GraphQLJWT\Authentication\JWTAuthenticator;
 use Firesphere\GraphQLJWT\Extensions\MemberExtension;
 use Firesphere\GraphQLJWT\Mutations\CreateTokenMutationCreator;
+use Firesphere\GraphQLJWT\Resolvers\Resolver;
 use Firesphere\GraphQLJWT\Types\TokenStatusEnum;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Control\Controller;
@@ -23,24 +24,19 @@ class JWTAuthenticatorTest extends SapphireTest
 
     protected $token;
 
-    /**
-     * @throws ValidationException
-     */
-    public function setUp()
+    protected function setUp(): void
     {
-        Environment::setEnv('JWT_SIGNER_KEY', 'test_signer');
+        Controller::curr()->getRequest()->addHeader('Origin', 'GraphQLJWT_Test');
+        Environment::setEnv('JWT_SIGNER_KEY', 'a_256bits_test_signer_or_it_would_not_work_correctly');
 
         parent::setUp();
         $this->member = $this->objFromFixture(Member::class, 'admin');
-        $createToken = CreateTokenMutationCreator::singleton();
-        $response = $createToken->resolve(
+        $response = Resolver::resolveCreateToken(
             null,
-            ['Email' => 'admin@silverstripe.com', 'Password' => 'error'],
-            [],
-            new ResolveInfo([])
+            ['email' => 'admin@silverstripe.com', 'password' => 'error']
         );
 
-        $this->token = $response['Token'];
+        $this->token = $response['token'];
     }
 
     /**
@@ -63,7 +59,7 @@ class JWTAuthenticatorTest extends SapphireTest
      */
     public function testInvalidToken()
     {
-        Environment::setEnv('JWT_SIGNER_KEY', 'string');
+        Environment::setEnv('JWT_SIGNER_KEY', 'a_long_long_long_long_long_long_long_long_long_string');
 
         $authenticator = JWTAuthenticator::singleton();
         $request = clone Controller::curr()->getRequest();
@@ -94,7 +90,7 @@ class JWTAuthenticatorTest extends SapphireTest
         $this->assertNotEmpty($validationResult->getMessages());
         $this->assertEquals(
             'Invalid token provided',
-            $validationResult->getMessages()[TokenStatusEnum::STATUS_INVALID]['message']
+            $validationResult->getMessages()[Resolver::STATUS_INVALID]['message']
         );
         $this->assertNull($result);
     }
@@ -108,16 +104,12 @@ class JWTAuthenticatorTest extends SapphireTest
         Environment::setEnv('JWT_SIGNER_KEY', "{$keys}/private.key");
         Environment::setEnv('JWT_PUBLIC_KEY', "{$keys}/public.pub");
 
-        $createToken = CreateTokenMutationCreator::singleton();
-
-        $response = $createToken->resolve(
+        $response = Resolver::resolveCreateToken(
             null,
-            ['Email' => 'admin@silverstripe.com', 'Password' => 'error'],
-            [],
-            new ResolveInfo([])
+            ['email' => 'admin@silverstripe.com', 'password' => 'error']
         );
 
-        $token = $response['Token'];
+        $token = $response['token'];
 
         $authenticator = JWTAuthenticator::singleton();
         $request = clone Controller::curr()->getRequest();
@@ -128,7 +120,7 @@ class JWTAuthenticatorTest extends SapphireTest
         $this->assertInstanceOf(Member::class, $result);
         $this->assertEquals($this->member->ID, $result->ID);
 
-        Environment::setEnv('JWT_SIGNER_KEY', 'test_signer');
+        Environment::setEnv('JWT_SIGNER_KEY', 'a_256bits_test_signer_or_it_would_not_work_correctly');
         // After changing the key to a string, the token should be invalid
         $result = $authenticator->authenticate(['token' => $token], $request);
         $this->assertNull($result);

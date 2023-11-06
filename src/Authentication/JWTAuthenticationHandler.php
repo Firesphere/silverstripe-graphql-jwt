@@ -6,10 +6,10 @@ use BadMethodCallException;
 use Exception;
 use Firesphere\GraphQLJWT\Extensions\MemberExtension;
 use Firesphere\GraphQLJWT\Helpers\HeaderExtractor;
-use Firesphere\GraphQLJWT\Helpers\RequiresAuthenticator;
 use OutOfBoundsException;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Security\AuthenticationHandler;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
@@ -22,7 +22,6 @@ use SilverStripe\Security\Security;
 class JWTAuthenticationHandler implements AuthenticationHandler
 {
     use HeaderExtractor;
-    use RequiresAuthenticator;
     use Injectable;
 
     /**
@@ -41,8 +40,7 @@ class JWTAuthenticationHandler implements AuthenticationHandler
         }
 
         // Validate the token. This is critical for security
-        $member = $this
-            ->getJWTAuthenticator()
+        $member = Injector::inst()->get(JWTAuthenticator::class)
             ->authenticate(['token' => $token], $request);
 
         if ($member) {
@@ -70,14 +68,7 @@ class JWTAuthenticationHandler implements AuthenticationHandler
      */
     public function logOut(HTTPRequest $request = null): void
     {
-        // A token can actually not be invalidated, but let's flush all valid tokens from the DB.
-        // Note that log-out acts as a global logout (all devices)
-        /** @var Member|MemberExtension $member */
-        $member = Security::getCurrentUser();
-        if ($member) {
-            $member->destroyAuthTokens();
-        }
-
-        Security::setCurrentUser(null);
+        // We don't take any action here.
+        // If we delete all tokens in this section, when a user logs out using a web interface (i.e. CMS), all the tokens will become invalid.
     }
 }
