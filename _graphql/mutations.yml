@@ -1,0 +1,6 @@
+refreshToken:
+  type: MemberToken
+  description: Refreshes a JWT token for a valid user. To be done
+'createToken(email: String!, password: String)':
+  type: MemberToken
+  description: Creates a JWT token for a valid user

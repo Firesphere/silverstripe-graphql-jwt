@@ -4,9 +4,7 @@ namespace Firesphere\GraphQLJWT\Tests;
 
 use Exception;
 use Firesphere\GraphQLJWT\Authentication\JWTAuthenticator;
-use Firesphere\GraphQLJWT\Mutations\CreateTokenMutationCreator;
-use Firesphere\GraphQLJWT\Queries\ValidateTokenQueryCreator;
-use Firesphere\GraphQLJWT\Types\TokenStatusEnum;
+use Firesphere\GraphQLJWT\Resolvers\Resolver;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\Session;
@@ -16,7 +14,7 @@ use SilverStripe\Dev\SapphireTest;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\Member;
 
-class ValidateTokenQueryCreatorTest extends SapphireTest
+class ValidateTokenTest extends SapphireTest
 {
     protected static $fixture_file = '../fixtures/JWTAuthenticatorTest.yml';
 
@@ -24,25 +22,18 @@ class ValidateTokenQueryCreatorTest extends SapphireTest
 
     protected $token;
 
-    /**
-     * @throws ValidationException
-     */
     public function setUp()
     {
         Environment::putEnv('JWT_SIGNER_KEY=test_signer');
 
         parent::setUp();
         $this->member = $this->objFromFixture(Member::class, 'admin');
-        $createToken = CreateTokenMutationCreator::singleton();
-
-        $response = $createToken->resolve(
+        $response = Resolver::resolveCreateToken(
             null,
-            ['Email' => 'admin@silverstripe.com', 'Password' => 'error'],
-            [],
-            new ResolveInfo([])
+            ['email' => 'admin@silverstripe.com', 'password' => 'error']
         );
 
-        $this->token = $response['Token'];
+        $this->token = $response['token'];
     }
 
     public function tearDown()
@@ -67,41 +58,34 @@ class ValidateTokenQueryCreatorTest extends SapphireTest
     {
         $this->buildRequest();
 
-        $queryCreator = ValidateTokenQueryCreator::singleton();
-        $response = $queryCreator->resolve(null, [], [], new ResolveInfo([]));
+        $response = Resolver::resolveValidateToken();
 
-        $this->assertTrue($response['Valid']);
+        $this->assertTrue($response['valid']);
     }
 
     /**
-     * @throws ValidationException
      * @throws Exception
      */
     public function testExpiredToken()
     {
         Config::modify()->set(JWTAuthenticator::class, 'nbf_expiration', -5);
 
-        $createToken = CreateTokenMutationCreator::singleton();
-
-        $response = $createToken->resolve(
+        $response = Resolver::resolveCreateToken(
             null,
-            ['Email' => 'admin@silverstripe.com', 'Password' => 'error'],
-            [],
-            new ResolveInfo([])
+            ['email' => 'admin@silverstripe.com', 'password' => 'error']
         );
-        $this->token = $response['Token'];
+        $this->token = $response['token'];
 
         $this->buildRequest();
 
-        $queryCreator = ValidateTokenQueryCreator::singleton();
-        $response = $queryCreator->resolve(null, [], [], new ResolveInfo([]));
+        $response = Resolver::resolveValidateToken();
 
-        $this->assertFalse($response['Valid']);
-        $this->assertEquals(TokenStatusEnum::STATUS_EXPIRED, $response['Status']);
-        $this->assertEquals(401, $response['Code']);
+        $this->assertFalse($response['valid']);
+        $this->assertEquals(Resolver::STATUS_EXPIRED, $response['status']);
+        $this->assertEquals(401, $response['code']);
         $this->assertEquals(
             'Token is expired, please renew your token with a refreshToken query',
-            $response['Message']
+            $response['message']
         );
     }
 }

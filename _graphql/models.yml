@@ -1,0 +1,6 @@
+SilverStripe\Security\Member:
+  fields:
+    id: true
+    firstName: true
+    surname: true
+    email: true

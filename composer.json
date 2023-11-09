@@ -6,7 +6,7 @@
     "require": {
         "php": ">=7.1",
         "silverstripe/framework": "^4.3",
-        "silverstripe/graphql": "^3.0",
+        "silverstripe/graphql": "4.x-dev",
         "lcobucci/jwt": "^3.2",
         "ext-json": "*"
     },
